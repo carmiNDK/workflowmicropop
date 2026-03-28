@@ -1,0 +1,38 @@
+.page-content {
+    margin-top: 20px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.stat-card {
+    background-color: var(--bg-white);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-card .stat-left {
+    width: 30px;
+}
+
+.stat-card .stat-center {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 12px;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+

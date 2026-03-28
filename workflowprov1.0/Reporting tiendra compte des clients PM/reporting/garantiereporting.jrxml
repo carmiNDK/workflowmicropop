@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="garantiereporting" language="groovy" pageWidth="1000" pageHeight="842" columnWidth="960" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="75"/>
+	<parameter name="dossier" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="typegarantie" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="anneefabrication" class="java.lang.Integer"/>
+	<field name="etat" class="java.lang.String"/>
+	<field name="prixachat" class="java.lang.Double"/>
+	<field name="valeurmarchande" class="java.lang.Double"/>
+	<field name="clientgarant" class="java.lang.String"/>
+	<field name="nomg" class="java.lang.String"/>
+	<field name="postnomg" class="java.lang.String"/>
+	<field name="prenomg" class="java.lang.String"/>
+	<field name="nomcompletg" class="java.lang.String"/>
+	<field name="nomsconjoint" class="java.lang.String"/>
+	<field name="nomcli" class="java.lang.String"/>
+	<field name="postnomcli" class="java.lang.String"/>
+	<field name="prenomcli" class="java.lang.String"/>
+	<field name="nom_complet" class="java.lang.String"/>
+	<field name="nomsuser" class="java.lang.String"/>
+	<field name="sommevaleurmarchande" class="java.lang.Double"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="136" splitType="Stretch">
+			<image hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="118" height="101"/>
+				<imageExpression class="java.lang.String"><![CDATA["photos.jpg"]]></imageExpression>
+			</image>
+			<rectangle>
+				<reportElement x="167" y="16" width="663" height="51"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="214" y="33" width="579" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EVALUATION DE LA GARANTIE]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="40" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="1" width="960" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="39" width="960" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="0" width="1" height="40"/>
+			</line>
+			<staticText>
+				<reportElement x="1" y="2" width="140" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Type de garantie*]]></text>
+			</staticText>
+			<line>
+				<reportElement x="960" y="3" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="141" y="2" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="306" y="2" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="471" y="2" width="1" height="38"/>
+			</line>
+			<line>
+				<reportElement x="576" y="3" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="686" y="3" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="841" y="1" width="1" height="37"/>
+			</line>
+			<staticText>
+				<reportElement x="142" y="2" width="164" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Description du bien]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="307" y="2" width="164" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Date de fabrication]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="472" y="2" width="104" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Etat]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="577" y="2" width="110" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Prix Achat ($)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="687" y="2" width="154" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Valeur marchande ($)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="842" y="2" width="118" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Source]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="34" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="31" width="960" height="1"/>
+			</line>
+			<line>
+				<reportElement x="471" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="141" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="686" y="0" width="1" height="31"/>
+			</line>
+			<textField>
+				<reportElement x="2" y="1" width="139" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{typegarantie}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="142" y="2" width="164" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="307" y="2" width="164" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{anneefabrication}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="472" y="2" width="104" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{etat}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="577" y="2" width="109" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{prixachat}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="687" y="2" width="154" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{valeurmarchande}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="842" y="1" width="118" height="29"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{clientgarant}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="1" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="306" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="576" y="0" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="841" y="0" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="960" y="0" width="1" height="31"/>
+			</line>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="55" splitType="Stretch">
+			<image scaleImage="FillFrame" hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="1" width="960" height="53"/>
+				<imageExpression class="java.lang.String"><![CDATA["piedpage.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="305" splitType="Stretch">
+			<staticText>
+				<reportElement x="1" y="5" width="958" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ * Biens du ménage (“BM”), Actifs immobilisés (“AI”), stock (“ST”), Hypothèque (“HYPO”)), Véhicule (“VEH”), Compte de Dépôt à terme garantie (“CDTG”), “Autre”]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="32" width="958" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ 1.    Propriétaire de la Garantie: Je confirme que je suis le propriétaire légal des biens susmentionnés.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1" y="59" width="289" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  Nom et signature  du propriétaire de la garantie :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1" y="86" width="957" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ 2.    Conjoint (e): J’accepte à ce que mon épouse/mari nantisse les biens susmentionnés à Micropop SA pour servir de garantie en vue d’assurer, en tant que]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="113" width="538" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ codébiteur (trice,) le  respect des obligations découlant du contrat de prêt avec Micropop SA.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1" y="140" width="538" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  Nom et signature  du conjoint(e)  ou (co-debiteur[trice] du propriétaire de la garantie :]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="540" y="140" width="418" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomsconjoint}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="1" y="167" width="957" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ 3.    Temoin : Je confirme que les biens susmentionnés appartiennent au propriétaire ci-haut cité.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1" y="194" width="183" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  Nom et signature  du temoin :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1" y="221" width="960" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ 4.   Agent de Crédit: Je certifie que les biens susmentionnés ont été vus à leur emplacement et évalués équitablement à la valeur marchande.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="248" width="242" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  Nom et signature  de l'agent de crédit :]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="244" y="248" width="714" height="27"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomsuser}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="87" y="275" width="242" height="27"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Date : ]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="329" y="275" width="142" height="27"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="290" y="63" width="668" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nom_complet}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="184" y="197" width="774" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomcompletg}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

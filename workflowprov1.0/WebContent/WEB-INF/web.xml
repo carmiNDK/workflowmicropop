@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:web="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+  <servlet>
+    <servlet-name>ERP</servlet-name>
+    <servlet-class>controleur.Controleur</servlet-class>
+    <init-param>
+      <param-name>chemin</param-name>
+      <param-value>/document_credit_il/</param-value>
+    </init-param>
+    <multipart-config>
+      <location>c:/dossier_credit_workflow/document_credit_il</location>
+      <max-file-size>52428800</max-file-size>
+      <max-request-size>52428800</max-request-size>
+      <file-size-threshold>52428800</file-size-threshold>
+    </multipart-config>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ERP</servlet-name>
+    <url-pattern>*.php</url-pattern>
+  </servlet-mapping>
+  <session-config>
+    <session-timeout>30</session-timeout>
+  </session-config>
+  <filter>
+    <filter-name>SessionFilter</filter-name>
+    <filter-class>controleur.SessionFilter
+		</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>SessionFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <context-param>
+    <param-name>GOOGLE_MAPS_KEY</param-name>
+    <param-value>AIzaSyC8UEj-rTLRj2WOOU66RV3zO5yiBF6mtVU</param-value>
+  </context-param>
+</web-app>

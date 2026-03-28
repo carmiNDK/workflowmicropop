@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contrat" language="groovy" pageWidth="1700" pageHeight="2500" columnWidth="1660" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="dossier" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select NomGroupe
+from groupegl
+where Id=$P{dossier}]]>
+	</queryString>
+	<field name="NomGroupe" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="1400" splitType="Stretch">
+			<image hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="118" height="86"/>
+				<imageExpression class="java.lang.String"><![CDATA["photos.jpg"]]></imageExpression>
+			</image>
+			<rectangle>
+				<reportElement x="463" y="14" width="736" height="72"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="547" y="37" width="579" height="28"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="17" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ENGAGEMENT INDIVIDUEL DES MEMBRES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="182" width="67" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[GL :]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="1290" y="9" width="132" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="84" y="182" width="571" height="38"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NomGroupe}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="232" width="638" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Groupe savings    ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="283" width="177" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Moi,  membre de la GL ]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="194" y="283" width="571" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NomGroupe}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="330" width="227" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[m'engage :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="393" width="748" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[1. A respecter les clauses du règlement de MICROPOP et du présent accord.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="442" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[2. A utiliser le crédit accordé   uniquement pour mon business. Je ne donnerai pas tout ou une  partie de mon crédit à quelqu’un d’autre.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="490" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[3. je m'engage à ne pas affecter le prêt réçu à des activités décrétées illicites et illégales conformément à la législation en matière pénale et à toutes législations spécifiques, aux traités et conventions internationales n'est pas permis.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="537" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[4. je m'engage à rembourser le montant exigé à chaque écheance tel que stipulé à la page suivante de cet engagement]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="585" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[    4a. Je m’engage à payer le remboursement et à épargner le montant tel que signé dans la page suivante. ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="623" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[    4b. Je m’engage à payer ma dette sans faire recours aux Epargnes comme stipulé dans l’accord de prêt.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="674" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[5. Je serai honnête vis-à-vis des autres membres du GL. Je veillerai à ce que des membres indésirables (membres endettés,  membres de famille, membres recevant le crédit pour d’autres buts) ne fassent pas partie du Groupe.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="722" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[6. J’assume la responsabilité des remboursements de tous les autres membres de mon groupe, s’ils sont en retard de remboursement, je m’engage à couvrir les arrières. S’ils sont défaillants, je comprends que je vais assumer une égale responsabilité  devant les tribunaux.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="770" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[7. Je garantie que le revenu de mon business, mes épargnes, ma propriété et mes autres ressources  serviront à rembourser la totalité du crédit MICROPOP.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="819" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[8. J’accepte de prendre en charge les dépenses additionnelles (papier de travail, frais légaux, transport, frais du comité, etc.) induites par l’application du contrat de MICROPOP avec mon groupe.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="929" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ce document prend effet à la date de la signature de l’accord entre MICROPOP et les membres de ce groupe et ne peut être modifié qu’avec l’accord de deux parties.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="29" y="1010" width="1643" height="38"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Par ma signature sur la page suivante j’accepte l’engagement tel que stipulé ci-haut.]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch">
+			<image scaleImage="FillFrame" hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="1660" height="53"/>
+				<imageExpression class="java.lang.String"><![CDATA["piedpage.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

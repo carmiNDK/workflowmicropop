@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="garantiereporting" language="groovy" pageWidth="1100" pageHeight="842" columnWidth="1060" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="numgrp" class="java.lang.String"/>
+	<parameter name="cycle" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select CONCAT_WS(' ',cli.NomMembreGroupe,cli.PostNomMembreGroupe,cli.PreNomMembreGroupe) AS nom_complet,cli.NumClientMembreCbs,
+cli.NomMembreGroupe,cli.PostNomMembreGroupe,cli.PreNomMembreGroupe,cli.AdresseMembreGroupe,f.Id,f.TotalApayerGL,f.EpargneGL,f.RemboursementGL,f.TotalRemboursementGL,f.EpargneBruteGL,f.MontantPretGL,f.CommentaireInfoFGL,gp.NumeroGroupeCBS,gp.NomGroupe from membregroupe as cli inner join groupegl as gp on gp.Id=cli.IdGroupeLisanga inner join dossiercreditgl as doss on doss.IdMembreGL=cli.IdClientMembre inner join informationfinanciereclientgl as f on f.IdDossierClientGL=doss.NumDossierGL where gp.Id=$P{numgrp} and doss.CycleGL=$P{cycle}]]>
+	</queryString>
+	<field name="nom_complet" class="java.lang.String"/>
+	<field name="NumClientMembreCbs" class="java.lang.Integer"/>
+	<field name="NomMembreGroupe" class="java.lang.String"/>
+	<field name="PostNomMembreGroupe" class="java.lang.String"/>
+	<field name="PreNomMembreGroupe" class="java.lang.String"/>
+	<field name="AdresseMembreGroupe" class="java.lang.String"/>
+	<field name="Id" class="java.lang.Integer"/>
+	<field name="TotalApayerGL" class="java.lang.Double"/>
+	<field name="EpargneGL" class="java.lang.Double"/>
+	<field name="RemboursementGL" class="java.lang.Double"/>
+	<field name="TotalRemboursementGL" class="java.lang.Double"/>
+	<field name="EpargneBruteGL" class="java.lang.Double"/>
+	<field name="MontantPretGL" class="java.lang.Double"/>
+	<field name="CommentaireInfoFGL" class="java.lang.String"/>
+	<field name="NumeroGroupeCBS" class="java.lang.Integer"/>
+	<field name="NomGroupe" class="java.lang.String"/>
+	<variable name="MontantPretGL_1" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{MontantPretGL}]]></variableExpression>
+	</variable>
+	<variable name="RemboursementGL_1" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{RemboursementGL}]]></variableExpression>
+	</variable>
+	<variable name="EpargneGL_1" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{EpargneGL}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="136" splitType="Stretch">
+			<image hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="118" height="101"/>
+				<imageExpression class="java.lang.String"><![CDATA["photos.jpg"]]></imageExpression>
+			</image>
+			<rectangle>
+				<reportElement x="167" y="16" width="663" height="51"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="214" y="33" width="579" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[FICHE INFO FINANCIERE PRET GL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="533" y="98" width="199" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Noms-Group :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="167" y="98" width="199" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Num-Group :]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="367" y="100" width="166" height="34"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{NumeroGroupeCBS}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="732" y="98" width="228" height="36"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NomGroupe}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="40" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="1" width="1060" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="39" width="1060" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="0" width="1" height="40"/>
+			</line>
+			<staticText>
+				<reportElement x="1" y="2" width="199" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Noms-Membre]]></text>
+			</staticText>
+			<line>
+				<reportElement x="1060" y="3" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="200" y="2" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="335" y="3" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="471" y="2" width="1" height="38"/>
+			</line>
+			<line>
+				<reportElement x="594" y="3" width="1" height="35"/>
+			</line>
+			<line>
+				<reportElement x="714" y="3" width="1" height="35"/>
+			</line>
+			<staticText>
+				<reportElement x="200" y="2" width="135" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[NumCompte]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="336" y="2" width="135" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[MntAccoder($)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="472" y="2" width="122" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Mensualité($)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="595" y="2" width="118" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EpargneR($)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="887" y="2" width="173" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Signature-Membre]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="715" y="2" width="172" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[AdresseDomicile]]></text>
+			</staticText>
+			<line>
+				<reportElement x="887" y="2" width="1" height="35"/>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="34" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="31" width="1060" height="1"/>
+			</line>
+			<line>
+				<reportElement x="471" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="200" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="714" y="0" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="1" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="335" y="1" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="594" y="0" width="1" height="31"/>
+			</line>
+			<line>
+				<reportElement x="1060" y="0" width="1" height="31"/>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="2" y="1" width="198" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nom_complet}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="201" y="1" width="134" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{NumClientMembreCbs}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="336" y="1" width="135" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{MontantPretGL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="473" y="1" width="120" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{RemboursementGL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="595" y="1" width="118" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{EpargneGL}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="887" y="1" width="1" height="31"/>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="715" y="0" width="172" height="31"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{AdresseMembreGroupe}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="55" splitType="Stretch">
+			<image scaleImage="FillFrame" hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="1" width="960" height="53"/>
+				<imageExpression class="java.lang.String"><![CDATA["piedpage.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="223" splitType="Stretch">
+			<staticText>
+				<reportElement x="2" y="123" width="347" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Signature de l'agent clientel (signature + noms)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="511" y="123" width="444" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Signature + noms du caissier (e) qui sert le client  / MICROPOP SA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="229" y="4" width="320" height="35"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total / MntAccoder($) :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="229" y="39" width="320" height="35"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total / Mensualité($) :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="229" y="74" width="320" height="35"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total / EpargneR($) :]]></text>
+			</staticText>
+			<textField pattern="###0.00">
+				<reportElement x="549" y="4" width="166" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$V{MontantPretGL_1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00">
+				<reportElement x="549" y="39" width="164" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$V{RemboursementGL_1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00">
+				<reportElement x="549" y="74" width="164" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$V{EpargneGL_1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="262" y="185" width="347" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Sceau / MICROPOP SA]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

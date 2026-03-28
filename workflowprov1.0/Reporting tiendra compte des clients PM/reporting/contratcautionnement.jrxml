@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contratgage" language="groovy" pageWidth="1700" pageHeight="2500" columnWidth="1660" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="560"/>
+	<property name="ireport.y" value="1881"/>
+	<parameter name="dossier" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="nomcli" class="java.lang.String"/>
+	<field name="postnomcli" class="java.lang.String"/>
+	<field name="prenomcli" class="java.lang.String"/>
+	<field name="nom_complet" class="java.lang.String"/>
+	<field name="adressedomicilecli" class="java.lang.String"/>
+	<field name="nomg" class="java.lang.String"/>
+	<field name="postnomg" class="java.lang.String"/>
+	<field name="prenomg" class="java.lang.String"/>
+	<field name="nomcompletg" class="java.lang.String"/>
+	<field name="adresseg" class="java.lang.String"/>
+	<field name="montantcreditvalider" class="java.lang.Double"/>
+	<field name="nbrecheanciervalide" class="java.lang.Integer"/>
+	<field name="nomsuser" class="java.lang.String"/>
+	<field name="libellebranche" class="java.lang.String"/>
+	<field name="caution" class="java.lang.Double"/>
+	<field name="fraisdossier" class="java.lang.Double"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="province" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="2301" splitType="Stretch">
+			<image hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="118" height="86"/>
+				<imageExpression class="java.lang.String"><![CDATA["photos.jpg"]]></imageExpression>
+			</image>
+			<rectangle>
+				<reportElement x="547" y="13" width="736" height="51"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="620" y="30" width="579" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CONTRAT DE CAUTIONNEMENT]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="88" width="536" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ENTRE : MICROPOP SA, société Anonyme avec Conseil d’Administration, ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="108" width="548" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ayant son siège social à Kinshasa, Avenue Victoire, n°A19, Immatriculée au ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="128" width="548" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[RCCM sous le numéro CD/KNG/RCCM/19-B-00574, Identification Nationale ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="148" width="306" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Id. Nat. 01-k6500-N45265M représentée par :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="168" width="548" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Chef d'agence  dûment habilité aux effets des présentes,]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="188" width="548" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ci-après dénommée  « le Prêteur » d’une part;]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="208" width="46" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ET :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="228" width="77" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Adresse :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="248" width="371" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[en République Démocratique du Congo,  ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="268" width="371" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ci-après dénommé « la caution», d’autre part ;]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="409" width="470" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  - Attendu que le Prêteur et l’Emprunteur ont conclu en date du :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="429" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  un contrat de prêt en vertu duquel le Prêteur a accordé au débiteur un ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1115" y="2070" width="24" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ ,le]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="936" y="2070" width="53" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fait à ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1242" y="2070" width="293" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ en deux exemplaires originaux.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="959" y="2102" width="156" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Pour MICROPOP S.A]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1036" y="2152" width="103" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Chef d'agence]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="990" y="2173" width="103" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[---------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="990" y="2217" width="103" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[La Caution :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1035" y="2256" width="374" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Faire Précéder la signature de la mention manuscrite]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1035" y="2278" width="268" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ « lu et approuvé »]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="375" width="371" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[IL A ÉTÉ PREALABLEMENT EXPOSE CE QUI SUIT :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="449" width="149" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  montant  ($) de:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="322" width="77" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Adresse :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="469" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  dont une copie est reprise en annexe des présentes;]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="489" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  - Attendu que la Caution déclare avoir pris connaissance  du contrat de prêt ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="509" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[   conclu entre le Prêteur et l’Emprunteur]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="529" width="704" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[  - Attendu que la Caution consent à garantir les engagements pris par le Débiteur ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="549" width="704" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[    en vertu du contrat de prêt]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="595" width="371" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[IL A ETE CONVENU ET ARRETE CE QUI SUIT :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="660" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[    Ce contrat de cautionnement est l’accessoire du contrat de prêt conclu ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="680" width="331" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[    entre le Prêteur et l’Emprunteur en date du  :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="700" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[   Par ce contrat, la Caution certifie connaître les obligations prises par ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="16" y="625" width="371" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Article 1 :Objet]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="12" y="720" width="567" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[   l’Emprunteur aux termes du contrat de prêt évoqué à l’alinéa premier.]]></text>
+			</staticText>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="8" y="753" width="693" height="173"/>
+				<imageExpression class="java.lang.String"><![CDATA["1c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="5" y="932" width="692" height="348"/>
+				<imageExpression class="java.lang.String"><![CDATA["2c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="14" y="1287" width="711" height="493"/>
+				<imageExpression class="java.lang.String"><![CDATA["3c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="722" y="514" width="904" height="412"/>
+				<imageExpression class="java.lang.String"><![CDATA["4c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="722" y="927" width="904" height="138"/>
+				<imageExpression class="java.lang.String"><![CDATA["5c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="722" y="1059" width="896" height="156"/>
+				<imageExpression class="java.lang.String"><![CDATA["6c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="697" y="1201" width="904" height="401"/>
+				<imageExpression class="java.lang.String"><![CDATA["7c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" hAlign="Left" vAlign="Middle">
+				<reportElement x="715" y="1602" width="904" height="339"/>
+				<imageExpression class="java.lang.String"><![CDATA["8c.jpg"]]></imageExpression>
+			</image>
+			<image scaleImage="FillFrame" vAlign="Middle">
+				<reportElement x="693" y="1925" width="915" height="143"/>
+				<imageExpression class="java.lang.String"><![CDATA["10c.jpg"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="306" y="148" width="395" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomsuser}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="82" y="230" width="619" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{adresseg}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="9" y="342" width="371" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ci-après dénommé « L’Emprunteur », d’autre part ;]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="86" y="322" width="473" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{adressedomicilecli}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="145" y="449" width="433" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{montantcreditvalider}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="993" y="2070" width="122" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{province}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="1137" y="2070" width="105" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="342" y="681" width="139" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="481" y="409" width="139" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="1137" y="2122" width="398" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomsuser}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="57" y="209" width="722" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomcompletg}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="27" y="296" width="752" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nom_complet}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="1093" y="2217" width="555" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomcompletg}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch">
+			<image scaleImage="FillFrame" hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="1660" height="53"/>
+				<imageExpression class="java.lang.String"><![CDATA["piedpage.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

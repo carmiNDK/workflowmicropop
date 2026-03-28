@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contrat" language="groovy" pageWidth="1300" pageHeight="2500" columnWidth="1260" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="15"/>
+	<property name="ireport.y" value="585"/>
+	<parameter name="libellegrp" class="java.lang.String"/>
+	<parameter name="cycledossier" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select m.NumClientMembreCbs,m.NomMembreGroupe,m.PostNomMembreGroupe,m.PreNomMembreGroupe,grp.NumeroGroupeCBS,grp.NomGroupe,u.NomsUser,grp.ChefAgence,m.CategorieMembreGroupe,count(m.IdClientMembre),sum(doss.PretAccorder),sum(F.TotalRemboursementGL),sum(F.RemboursementGL)
+from membregroupe as m inner join groupegl as grp on grp.Id=m.IdGroupeLisanga
+inner join dossiercreditgl as doss on doss.IdMembreGL=m.IdClientMembre
+inner join informationfinanciereclientgl as F on F.IdDossierClientGL=doss.NumDossierGL
+inner join user as u on u.Iduser=grp.PromoteurGroupe
+where grp.NomGroupe=$P{libellegrp} and doss.CycleGL=$P{cycledossier} and (m.priority=1 or m.priority=2 or m.priority=3 or m.priority=4 or m.priority=5)
+group by m.NumClientMembreCbs,m.NomMembreGroupe,m.PostNomMembreGroupe,m.PreNomMembreGroupe,grp.NumeroGroupeCBS,grp.NomGroupe,u.NomsUser,grp.ChefAgence
+order by m.priority asc;]]>
+	</queryString>
+	<field name="NumClientMembreCbs" class="java.lang.Integer"/>
+	<field name="NomMembreGroupe" class="java.lang.String"/>
+	<field name="PostNomMembreGroupe" class="java.lang.String"/>
+	<field name="PreNomMembreGroupe" class="java.lang.String"/>
+	<field name="NumeroGroupeCBS" class="java.lang.Integer"/>
+	<field name="NomGroupe" class="java.lang.String"/>
+	<field name="NomsUser" class="java.lang.String"/>
+	<field name="ChefAgence" class="java.lang.String"/>
+	<field name="CategorieMembreGroupe" class="java.lang.String"/>
+	<field name="count(m.IdClientMembre)" class="java.lang.Long"/>
+	<field name="sum(doss.PretAccorder)" class="java.lang.Double"/>
+	<field name="sum(F.TotalRemboursementGL)" class="java.lang.Double"/>
+	<field name="sum(F.RemboursementGL)" class="java.lang.Double"/>
+	<variable name="sum(doss.PretAccorder)_1" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{sum(doss.PretAccorder)}]]></variableExpression>
+	</variable>
+	<variable name="sum(F.TotalRemboursementGL)_1" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{sum(F.TotalRemboursementGL)}]]></variableExpression>
+	</variable>
+	<variable name="sum(F.RemboursementGL)_1" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{sum(F.RemboursementGL)}]]></variableExpression>
+	</variable>
+	<variable name="count(m.IdClientMembre)_1" class="java.lang.Long" calculation="Sum">
+		<variableExpression><![CDATA[$F{count(m.IdClientMembre)}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="2198" splitType="Stretch">
+			<image hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="118" height="97"/>
+				<imageExpression class="java.lang.String"><![CDATA["photos.jpg"]]></imageExpression>
+			</image>
+			<rectangle>
+				<reportElement x="268" y="25" width="727" height="72"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="417" y="46" width="448" height="28"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="17" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Accord de Prêt]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="227" y="230" width="186" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="9" y="137" width="518" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Le Groupe LISANGA représenté par les membres du comité]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="38" y="185" width="825" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[La signature du présent accord  équivaut à une reconnaissance de dette enversMICROPOP SA.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="230" width="190" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Date de l’accord :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="38" y="274" width="190" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Montant total du prêt ($) :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="38" y="318" width="309" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nombre de paiements (échéances) : 6]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="38" y="364" width="443" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Montant total à payer à MICROPOP SA  (capital et intérêt)  $ :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="39" y="412" width="432" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Montant de remboursement par  versement ($) :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="458" width="523" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Taux d’intérêt => (Mois : 6.92% ,Bi hebdo :3.46% ,Jour : 0.25%) ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="503" width="190" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Date de la capitalisation :]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="227" y="503" width="186" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="549" width="343" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nombre total des clients dans le groupe :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="9" y="610" width="1250" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Article 1 : Engagements des membres qui empruntent auprès du GL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="655" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[A. Dans l’intérêt des emprunteurs, ceux-ci acceptent de  remplir les engagements suivants :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="39" y="699" width="1221" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[1. Organiser un groupe qui s’appelle GROUPE LISANGA et apprendre la méthodologie de crédit de MICROPOP SA.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="39" y="745" width="1223" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[2. Elire un comité exécutif d’au moins 4 membres : un Président, un Trésorier, un secrétaire et un Gardien au minimum.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="39" y="790" width="1223" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[3. Le montant total de ces  dépôts doit représenter  au minimum 10% du montant du crédit sollicité.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="39" y="836" width="1220" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[4. Sur le prêt accordé, le membre doit payer 2% pour le frais de dossier.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="885" width="1237" height="37" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[B. Les membres du GL doivent rembourser les prêts plus les intérêts chaque  mois, soit 3 versements pendant le cycle de 16 semaines, 5 versements pendant ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="922" width="1237" height="37" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[le cycle de 20 semaines  et 6 versements pendant le cycle de 24  semaines.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="967" width="1237" height="37" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[C.  Le taux d’intérêt est de__6,92___  % par mois. Tout paiement en retard entraîne un accroissement de ce taux d’intérêt, à raison de 0,02 % par jour de retard.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1013" width="1237" height="37" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[D. Les membres sont d’accord pour payer le prêt et les intérêts de tout membre défaillant.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1059" width="1237" height="37" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[E. Le LIFUTI YA BOMOKO est obligatoire, lorsqu’un  membre ou plus, n’a pas assuré son remboursement, lors d’une réunion.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="24" y="1106" width="1237" height="37" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[F. Le groupe ainsi que chacun de ses  membres, s’engagent à ne  pas emprunter auprès d’autres institutions de micro finance, et ce pendant toute la durée du présent prêt.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="9" y="1151" width="1250" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Article 2 : Conditions des épargnes.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="24" y="1194" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Après l’octroi du prêt, les membres du GL s’engagent à continuer à épargner dans leurs comptes auprès de MICROPOP SA, et ce, à chaque réunion de versement.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="22" y="1231" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[En outre, les membres sont tenus de rembourser le prêt de MICROPOP SA, sans faire recours aux épargnes.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1268" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Les épargnes obligatoires (10% du prêt octroyé au premier cycle, 20% à partir du second cycle) ne peuvent être retirés qu’à la fin du cycle de prêt.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="12" y="1316" width="1247" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Article 3 : L’engagement du comité]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1361" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Les membres du comité exercent leurs fonctions durant toute la période du prêt ; ils  n’ont pas le droit de quitter le groupe, tant que la dette de  MICROPOP SA ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1398" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ n’est  pas éteinte.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1435" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[En cas de litige, quel qu’il soit, MICROPOP SA fera appel au comité, lequel engage le groupe dans son ensemble.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="12" y="1479" width="1247" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Article 4 : L’engagement de MICROPOP]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="22" y="1522" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[L’équipe de MICROPOP SA fournira aux membres du GL une formation en micro crédit, un support technique en comptabilité fondamentale et  de   groupe.  MICROPOP SA ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="23" y="1559" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ a le droit de contrôler toutes les activités du GL pendant le cycle. MICROPOP SA peut exclure n’importe quel membre du GL qui n’a pas respecté les  modalités du crédit.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="23" y="1596" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ MICROPOP SA se réserve le droit d’utiliser n’importe quel moyen nécessaire et légal pour recouvrer son crédit si un ou plusieurs membres  ne remboursent pas  ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="23" y="1633" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ le  capital et les intérêts du montant reçu auprès d’elle.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="24" y="1670" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Si MICROPOP SA souhaite modifier le taux d’intérêt durant le cycle, elle en informera le GL, au minimum deux semaines avant.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="13" y="1717" width="1247" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Article 5 : Autres conditions]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1762" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Le présent accord entre en vigueur au jour de sa signature par les membres du GL, lequel correspond également au jour de réception du crédit. ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1799" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ L’accord cesse de   produire ses effets  le jour où le groupe aura soldé le prêt de MICROPOP SA (principal et intérêts).]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1836" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Chacune des deux parties s’engage à informer l’autre, par écrit, de tout changement dans les termes du présent accord. Tout différend sera réglé à l’amiable, ou à défaut, ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1873" width="1237" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ porté devant les tribunaux.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="1921" width="1247" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Article 6 : Signature]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="25" y="1966" width="1235" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Le présent  accord est publié en deux (2) exemplaires en date du _________. Toutes les parties assurent le comprendre clairement et s’engagent à en respecter les clauses.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="26" y="2016" width="1235" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Pour MICROPOP SA :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="132" y="2083" width="150" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Chef  d'agence => ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="118" y="2143" width="295" height="37"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Pour le comité du Groupe Lisanga (GL) :]]></text>
+			</staticText>
+			<textField evaluationTime="Report">
+				<reportElement x="228" y="274" width="250" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$V{sum(doss.PretAccorder)_1}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="#,##0.00">
+				<reportElement x="481" y="364" width="263" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$V{sum(F.TotalRemboursementGL)_1}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="#,##0.00">
+				<reportElement x="471" y="412" width="273" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$V{sum(F.RemboursementGL)_1}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="380" y="549" width="226" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Long"><![CDATA[$V{count(m.IdClientMembre)_1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="282" y="2083" width="377" height="37"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ChefAgence}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="45" splitType="Stretch">
+			<line>
+				<reportElement x="1" y="0" width="1258" height="1"/>
+			</line>
+			<line>
+				<reportElement x="1" y="44" width="1259" height="1"/>
+			</line>
+			<line>
+				<reportElement x="1" y="1" width="1" height="43"/>
+			</line>
+			<line>
+				<reportElement x="1261" y="2" width="1" height="43"/>
+			</line>
+			<staticText>
+				<reportElement x="2" y="2" width="228" height="41"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nom du Membre Groupe]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="697" y="2" width="200" height="41"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Numéro de Compte Client]]></text>
+			</staticText>
+			<line>
+				<reportElement x="696" y="0" width="1" height="43"/>
+			</line>
+			<line>
+				<reportElement x="897" y="0" width="1" height="43"/>
+			</line>
+			<staticText>
+				<reportElement x="898" y="2" width="184" height="41"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fonction Membre]]></text>
+			</staticText>
+			<line>
+				<reportElement x="1082" y="0" width="1" height="43"/>
+			</line>
+			<staticText>
+				<reportElement x="1084" y="2" width="175" height="41"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Signature]]></text>
+			</staticText>
+			<line>
+				<reportElement x="470" y="1" width="1" height="43"/>
+			</line>
+			<staticText>
+				<reportElement x="471" y="2" width="225" height="41"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PréNom du Membre Groupe]]></text>
+			</staticText>
+			<line>
+				<reportElement x="230" y="0" width="1" height="43"/>
+			</line>
+			<staticText>
+				<reportElement x="231" y="2" width="239" height="41"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PostNom du Membre Groupe]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="24" splitType="Stretch">
+			<line>
+				<reportElement x="3" y="22" width="1258" height="1"/>
+			</line>
+			<line>
+				<reportElement x="1" y="1" width="1" height="21"/>
+			</line>
+			<line>
+				<reportElement x="1261" y="1" width="1" height="21"/>
+			</line>
+			<line>
+				<reportElement x="470" y="1" width="1" height="20"/>
+			</line>
+			<line>
+				<reportElement x="696" y="1" width="1" height="20"/>
+			</line>
+			<line>
+				<reportElement x="1082" y="1" width="1" height="20"/>
+			</line>
+			<line>
+				<reportElement x="230" y="0" width="1" height="21"/>
+			</line>
+			<line>
+				<reportElement x="897" y="0" width="1" height="21"/>
+			</line>
+			<textField>
+				<reportElement x="471" y="0" width="225" height="21"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PreNomMembreGroupe}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="897" y="0" width="185" height="21"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CategorieMembreGroupe}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="3" y="1" width="228" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NomMembreGroupe}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="231" y="1" width="239" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PostNomMembreGroupe}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="697" y="1" width="200" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{NumClientMembreCbs}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch">
+			<image scaleImage="FillFrame" hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="1" width="1260" height="53"/>
+				<imageExpression class="java.lang.String"><![CDATA["piedpage.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

@@ -1,0 +1,266 @@
+.header {
+	position: fixed;
+	top: 0;
+	right: 0;
+	left: 250px;
+	right: 0;
+	transition: all 0.5s ease-in-out;
+	z-index: 1000;
+	box-shadow: 0px 8px 10px -9px #000000;
+}
+
+.header nav {
+	height: 70px;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 20px;
+	background-color: #ffff;
+	/*box-shadow: 0 0 28px 0 rgba(82, 63, 105, 0.05); */
+	border-bottom: 1px solid var(- -bg-border);
+}
+
+.header nav .left h5 {
+	font-size: 1.3rem;
+	color: var(- -text-white2);
+	background-color: var(- -bg-primary);
+	padding: 0.4rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 6px;
+	text-align: center;
+}
+
+.header nav .left h5:hover {
+	opacity: 0.7;
+}
+
+.header nav .left h5:active {
+	opacity: 0.7;
+}
+
+.header nav .left h5 i {
+	color: var(- -text-white2);
+}
+
+.header nav .right {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+.header nav .right button {
+	background-color: transparent !important;
+	border: none !important;
+	cursor: pointer !important;
+}
+
+.header nav .right button i {
+	font-size: 22px;
+	color: var(- -text-secondary);
+}
+
+.header nav .right .profil .dropdown-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.header nav .right .profil img {
+	width: 40px;
+	border-radius: 20px;
+	margin-right: 12px;
+}
+
+.header nav .right .profil h5 {
+	font-family: 'Inter', 'Nunito', 'Helvetica', sans-serif;
+	margin-bottom: 5px;
+}
+
+.header nav .right .profil p {
+	font-family: 'Helvetica', sans-serif;
+	font-size: 12px;
+	margin-top: 0;
+	color: var(- -text-secondary);
+}
+
+.navbar-logo {
+	max-height: 40px;
+	margin-right: 15px;
+}
+
+.agent-avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	object-fit: cover;
+	margin-right: 12px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.main-container {
+	margin-top: 80px;
+	min-height: calc(100vh - 80px);
+}
+
+.welcome-segment {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	border-radius: 15px !important;
+}
+
+.statistic-card {
+	transition: transform 0.3s ease;
+}
+
+.statistic-card:hover {
+	transform: translateY(-5px);
+}
+
+.quick-action-btn {
+	background: linear-gradient(45deg, #FD746C, #FF9068) !important;
+	color: white !important;
+}
+
+.sidebar-menu {
+	position: sticky;
+	top: 100px;
+}
+
+.activity-item {
+	border-left: 3px solid #2185d0;
+	padding-left: 15px;
+}
+
+.dashboard-grid {
+	background-color: #f8f9fa;
+}
+
+.content {
+	padding-left: 280px;
+	padding-top: 90px;
+	padding-right: 30px;
+	position: relative;
+	padding-bottom: 50px;
+}
+
+.content .content-with-nav {
+	padding-top: 40px;
+}
+
+.page-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.page-header-title {
+	font-family: 'Inter', 'Lato', 'Helvetica', sans-serif;
+	font-size: 2rem;
+	font-weight: 900;
+	margin-bottom: 0;
+}
+
+.page-header-subtitle {
+	font-family: 'Lato', 'Inter', 'Helvetica', sans-serif;
+	font-size: 1rem;
+	font-weight: 500;
+	margin-bottom: 0;
+}
+
+.content-nav {
+	height: 50px;
+	background-color: #3e5172;
+	position: fixed;
+	top: 50px;
+	left: 280px;
+	right: 0;
+	z-index: 1;
+}
+
+.content-nav ul {
+	with: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.content-nav ul li:last-child {
+	flex: 1;
+}
+
+.content-nav ul li {
+	border-bottom: 1px solid white;
+	padding: 6px 10px;
+	border-radius: 6px 6px 0 0;
+}
+
+.content-nav ul a {
+	display: inline-block;
+	margin-right: 4px;
+	text-decoration: none;
+	color: white;
+	font-size: 0.8rem;
+	padding: 8px 6px;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+	margin-bottom: -6px;
+}
+
+.content-nav ul a.active {
+	background-color: white;
+	color: black;
+}
+
+.content-nav ul li . {
+	background-color: white;
+}
+
+.ui.very.compact.table td,.ui.very.compact.table th {
+	padding: 2px 2px !important;
+}
+
+#exampleModal2025 {
+	min-height: 400px !important;
+}
+
+.canscroll {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media screen and (max-width: 960px) {
+	.sidebar {
+		transform: translateX(-100%);
+	}
+	.header {
+	position: fixed;
+	top: 0;
+	right: 0;
+	left:0;
+	right: 0;
+}
+
+.content-nav {
+	position: fixed;
+	top: 50px;
+	left: 30px;
+	right: 0;
+	z-index: 10;
+}
+
+	.content {
+		padding-left: 30px;
+	}
+	.sidebar.isvisible {
+		transform: translateX(0);
+		box-shadow: 1px 0 3px rgb(219, 219, 219);
+		z-index: 1000;
+	}
+}
+
