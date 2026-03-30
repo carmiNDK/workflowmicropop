@@ -1,0 +1,29 @@
+NB: le nom du fichier doit etre (build.xml)
+
+
+<project name="myapp" default="war">
+
+    <property name="src.dir" value="src"/>
+    <property name="web.dir" value="WebContent"/>
+    <property name="build.dir" value="build"/>
+    <property name="dist.dir" value="dist"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false"/>
+    </target>
+
+    <target name="war" depends="clean,compile">
+        <mkdir dir="${dist.dir}"/>
+        <war destfile="${dist.dir}/myapp.war" webxml="${web.dir}/WEB-INF/web.xml">
+            <fileset dir="${web.dir}"/>
+            <classes dir="${build.dir}"/>
+        </war>
+    </target>
+
+</project>

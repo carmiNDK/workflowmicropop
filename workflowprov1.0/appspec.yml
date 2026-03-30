@@ -1,0 +1,6 @@
+version: 0.0
+os: linux
+
+files:
+  - source: deploy/workflomicropop.war
+    destination: /opt/payara/glassfish/domains/domain1/autodeploy/
