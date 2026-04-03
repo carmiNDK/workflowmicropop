@@ -7,11 +7,11 @@ public class ConnexionBD {
 	private static final ThreadLocal<Connection> threadConnection = new ThreadLocal<>();
 
 	// worflowcredit,BaseTestworflowcredit,localhost;192.168.60.45
-	private static final String URL = "jdbc:mysql://localhost:3306/worflowcredit"
+	private static final String URL = "jdbc:mysql://192.168.60.45:3306/worflowcredit"
 			+ "?useUnicode=true&characterEncoding=utf8"
 			+ "&autoReconnect=true&connectTimeout=5000&socketTimeout=120000";
-	private static final String USER = "root";
-	private static final String PWD = "Micropop@2025";
+	private static final String USER = "erp";
+	private static final String PWD = "Micropop@2024";
 
 	// String user = "root";String pwd = "Micropop@2025"; pour local
 	// String user = "erp";String pwd = "Micropop@2024"; pour local serveur

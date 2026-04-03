@@ -59,12 +59,12 @@ public class Controleur extends HttpServlet {
 	public static final int TAILLE_TAMPON = 10240; // 10 ko
 	private static final long serialVersionUID = 1L;
 	WorkfloDAO WDao = new WorkfloDAO();
-	
+
 	public Controleur() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	private static String getNomFichier(Part part) {
 		for (String contentDisposition : part.getHeader("content-disposition")
 				.split(";")) {
@@ -23882,7 +23882,7 @@ public class Controleur extends HttpServlet {
 			if (EtatGp.equals("Terminer")) {
 				int id_dcr_grp_sol = WDao
 						.GetVerificationSiGroupePossedeUnPretEncour(NumeroGroupeCBS);
-				if (id_dcr_grp_sol == 0) {
+				if (id_dcr_grp_sol > 0) {
 					request.setAttribute("error",
 							"Désolé,ce groupe posséde déja un encour crédit !!!");
 				} else {
