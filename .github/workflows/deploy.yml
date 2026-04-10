@@ -15,27 +15,24 @@ jobs:
 
       - name: Prepare Deployment Package
         run: |
-          # On cherche les fichiers récursivement pour ne pas se tromper de dossier
+          # 1. On cherche les fichiers
           DEPLOY_SH=$(find . -name "deploy.sh" | head -n 1)
           WAR_FILE=$(find . -name "workflowmicropop.war" | head -n 1)
           APPSPEC=$(find . -name "appspec.yml" | head -n 1)
 
-          echo "Fichiers trouvés :"
-          echo "Script: $DEPLOY_SH"
-          echo "War: $WAR_FILE"
-          echo "Appspec: $APPSPEC"
+          # 2. NETTOYAGE CRUCIAL : Convertir CRLF en LF (Format Linux)
+          sed -i 's/\r$//' "$DEPLOY_SH"
 
-          # On les ramène TOUS à la racine actuelle
+          # 3. On ramène tout à la racine
           cp "$DEPLOY_SH" ./deploy.sh
           cp "$WAR_FILE" ./workflowmicropop.war
           cp "$APPSPEC" ./appspec.yml
           
-          # On force les droits d'exécution
+          # 4. On force les droits d'exécution
           chmod +x ./deploy.sh
 
       - name: Create package
         run: |
-          # On zip les fichiers qui sont maintenant à la racine
           zip deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
       - name: Configure AWS credentials
