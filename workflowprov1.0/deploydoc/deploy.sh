@@ -1,40 +1,39 @@
 #!/bin/bash
-# Redirection des sorties vers le log de debug sur l'EC2
-exec > >(tee -a /home/ubuntu/deploy_script.log) 2>&1
+# Redirection vers un log global sur l'EC2
+LOG="/home/ubuntu/deploy_script.log"
+exec > >(tee -a "$LOG") 2>&1
 
 ASADMIN="/opt/payara/bin/asadmin"
 APP_DIR="/home/ubuntu/app"
 WAR_FILE="workflowmicropop.war"
 PWD_FILE="/tmp/.asadmin_pass"
 
-echo "=== DEPLOYMENT EVENT: $LIFECYCLE_EVENT [$(date)] ==="
+echo "--- EVENT: $LIFECYCLE_EVENT [$(date)] ---"
 
-# Préparation du mot de passe Payara
-echo "AS_ADMIN_PASSWORD=micropop" > $PWD_FILE
+# Création du fichier password
+echo "AS_ADMIN_PASSWORD=micropop" > "$PWD_FILE"
 
 if [ "$LIFECYCLE_EVENT" == "ApplicationStop" ]; then
-    echo "Désinstallation de la version précédente..."
-    $ASADMIN --user admin --passwordfile $PWD_FILE undeploy workflowmicropop || echo "Aucune application à arrêter."
+    echo "Arrêt de l'ancienne version..."
+    $ASADMIN --user admin --passwordfile "$PWD_FILE" undeploy workflowmicropop || echo "Aucune app à arrêter."
 
 elif [ "$LIFECYCLE_EVENT" == "AfterInstall" ]; then
-    echo "Vérification de la disponibilité de Payara..."
-    # Attente active du port d'administration
+    echo "Attente de Payara (Port 4848)..."
     for i in {1..12}; do
         if nc -z localhost 4848; then
-            echo "Payara est prêt !"
+            echo "Payara est en ligne !"
             break
         fi
-        echo "Attente de Payara (5s)..."
+        echo "Attente... ($i/12)"
         sleep 5
     done
 
-    echo "Déploiement du nouveau fichier WAR..."
-    $ASADMIN --user admin --passwordfile $PWD_FILE deploy \
+    echo "Déploiement du WAR..."
+    $ASADMIN --user admin --passwordfile "$PWD_FILE" deploy \
       --force \
       --contextroot /workflowmicropop \
-      $APP_DIR/$WAR_FILE
+      "$APP_DIR/$WAR_FILE"
 fi
 
-# Nettoyage du fichier temporaire
-rm -f $PWD_FILE
-echo "=== FIN DU SCRIPT ==="
+rm -f "$PWD_FILE"
+echo "--- FIN DU SCRIPT ---"

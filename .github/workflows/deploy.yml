@@ -15,27 +15,27 @@ jobs:
 
       - name: Prepare Deployment Package
         run: |
-          # 1. Recherche des fichiers source
+          # 1. Localisation des fichiers source
           DEPLOY_SH=$(find . -name "deploy.sh" | head -n 1)
           WAR_FILE=$(find . -name "workflowmicropop.war" | head -n 1)
           APPSPEC=$(find . -name "appspec.yml" | head -n 1)
 
-          # 2. SUPPRESSION DE L'ERREUR 127 (Conversion CRLF vers LF)
-          # Cette ligne est MAGIQUE : elle répare le formatage Windows pour Linux
-          sed -i 's/\r$//' "$DEPLOY_SH"
-          sed -i 's/\r$//' "$APPSPEC"
-
-          # 3. Mise à plat des fichiers à la racine du ZIP
-          cp "$DEPLOY_SH" ./deploy.sh
-          cp "$WAR_FILE" ./workflowmicropop.war
-          cp "$APPSPEC" ./appspec.yml
+          # 2. NETTOYAGE ULTIME (Supprime toute trace de Windows CRLF)
+          cat "$DEPLOY_SH" | tr -d '\r' > ./deploy.sh
+          cat "$APPSPEC" | tr -d '\r' > ./appspec.yml
           
-          # 4. Attribution des permissions d'exécution
+          # 3. Copie du WAR à la racine
+          cp "$WAR_FILE" ./workflowmicropop.war
+          
+          # 4. Droits d'exécution forcés
           chmod +x ./deploy.sh
+          
+          # 5. Debug visuel dans GitHub Actions
+          ls -la
 
       - name: Create package
         run: |
-          # Création du ZIP sans structure de dossiers complexe
+          # On zip uniquement les fichiers nettoyés à la racine
           zip deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
       - name: Configure AWS credentials
