@@ -15,16 +15,27 @@ jobs:
 
       - name: Prepare Deployment Package
         run: |
-          # On rend le script exécutable dans son dossier d'origine
-          chmod +x deploydoc/deploy.sh
-          # On ramène TOUT à la racine du workspace pour le ZIP
-          cp deploydoc/deploy.sh .
-          cp deploydoc/workflowmicropop.war .
-          cp deploydoc/appspec.yml .
+          # On cherche les fichiers récursivement pour ne pas se tromper de dossier
+          DEPLOY_SH=$(find . -name "deploy.sh" | head -n 1)
+          WAR_FILE=$(find . -name "workflowmicropop.war" | head -n 1)
+          APPSPEC=$(find . -name "appspec.yml" | head -n 1)
+
+          echo "Fichiers trouvés :"
+          echo "Script: $DEPLOY_SH"
+          echo "War: $WAR_FILE"
+          echo "Appspec: $APPSPEC"
+
+          # On les ramène TOUS à la racine actuelle
+          cp "$DEPLOY_SH" ./deploy.sh
+          cp "$WAR_FILE" ./workflowmicropop.war
+          cp "$APPSPEC" ./appspec.yml
+          
+          # On force les droits d'exécution
+          chmod +x ./deploy.sh
 
       - name: Create package
         run: |
-          # On zip uniquement les fichiers à la racine
+          # On zip les fichiers qui sont maintenant à la racine
           zip deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
       - name: Configure AWS credentials
