@@ -11,19 +11,14 @@ permissions:
     owner: ubuntu
     group: ubuntu
     mode: 755
-    
+
 hooks:
   ApplicationStop:
     - location: deploydoc/deploy.sh
       timeout: 120
-      runas: ubuntu
+      runas: root # Indispensable pour asadmin
       
-  BeforeInstall:
-    - location: deploydoc/deploy.sh
-      timeout: 120
-      runas: ubuntu
-
   AfterInstall:
     - location: deploydoc/deploy.sh
       timeout: 300
-      runas: ubuntu
+      runas: root # Indispensable pour asadmin

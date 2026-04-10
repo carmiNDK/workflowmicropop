@@ -13,13 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Debug files
-        run: ls -R
+      # ✅ Préparation : On donne les droits et on place l'appspec à la racine
+      - name: Prepare Deployment Package
+        run: |
+          chmod +x deploydoc/deploy.sh
+          # On copie l'appspec à la racine du workspace pour le ZIP
+          cp deploydoc/appspec.yml .
 
-      # ✅ Build package propre
+      # ✅ Build package : On zip l'appspec (racine) et le dossier deploydoc
       - name: Create package
         run: |
-          zip -r deploydoc.zip workflowprov1.0/deploydoc appspec.yml deploy.sh
+          zip -r deploydoc.zip appspec.yml deploydoc/
 
       # AWS credentials
       - name: Configure AWS credentials
@@ -34,7 +38,7 @@ jobs:
         run: |
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip
 
-      # 🚀 TRIGGER CODEDEPLOY (MANQUANT CHEZ TOI)
+      # 🚀 TRIGGER CODEDEPLOY
       - name: Deploy via CodeDeploy
         run: |
           aws deploy create-deployment \
