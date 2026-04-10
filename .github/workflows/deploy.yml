@@ -13,39 +13,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Force la récupération de tout l'historique pour éviter le cache
 
       - name: Prepare Deployment Package
         run: |
-          # 1. Nettoyage et création du dossier de sortie
+          # 1. Nettoyage total avant de commencer
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
 
-          # 2. CIBLAGE STRICT (On ne cherche plus, on pointe du doigt)
-          # On définit les chemins exacts vers ton dossier deploydoc
-          WAR_FILE_SRC="deploydoc/workflowmicropop.war"
-          DEPLOY_SH_SRC="deploydoc/deploy.sh"
-          APPSPEC_SRC="deploydoc/appspec.yml"
+          # 2. LOCALISATION INTELLIGENTE
+          # On cherche le WAR le plus RECENT dans tout le projet
+          WAR_FILE_SRC=$(find . -name "workflowmicropop.war" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" ")
+          DEPLOY_SH_SRC=$(find . -name "deploy.sh" -type f | head -n 1)
+          APPSPEC_SRC=$(find . -name "appspec.yml" -type f | head -n 1)
 
-          echo "DEBUG: Préparation des fichiers depuis le dossier deploydoc..."
+          echo "DEBUG: Fichier WAR detecté : $WAR_FILE_SRC"
 
-          # 3. NETTOYAGE RADICAL (Format Linux + Encodage UTF-8 pur)
-          # On traite les fichiers texte pour éviter les erreurs CodeDeploy
+          # 3. TRANSFERT ET NETTOYAGE
+          # On utilise 'cp -p' pour préserver les attributs et on nettoie l'encodage
           cat "$DEPLOY_SH_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
           cat "$APPSPEC_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
           
-          # On copie le WAR (le vrai, le nouveau !)
+          # IMPORTANT: On copie le WAR détecté
           cp "$WAR_FILE_SRC" ./out_package/workflowmicropop.war
 
-          # 4. Droits d'exécution et vérification
           chmod +x ./out_package/deploy.sh
           
-          echo "Vérification du paquet final avant zip :"
-          ls -lh ./out_package
+          # 4. VERIFICATION DE LA TAILLE (Pour être sûr que c'est le bon)
+          echo "Taille du WAR a deployer :"
+          ls -lh ./out_package/workflowmicropop.war
 
       - name: Create package
         run: |
-          # On entre dans le dossier propre pour créer un ZIP parfait
+          # Création du ZIP à partir du dossier propre
           cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
       - name: Configure AWS credentials
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload to S3
         run: |
-          # Upload sur S3 (écrase l'ancien zip s'il existe)
+          # On ecrase systematiquement sur S3
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip --region eu-west-3
 
       - name: Deploy via CodeDeploy
