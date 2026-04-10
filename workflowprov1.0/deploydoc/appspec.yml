@@ -2,11 +2,28 @@ version: 0.0
 os: linux
 
 files:
-  - source: workflowmicropop.war
-    destination: /home/ubuntu/workflowmicropop/
+  - source: deploydoc/
+    destination: /home/ubuntu/app
+    overwrite: true
+
+permissions:
+  - object: /home/ubuntu/app
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
 
 hooks:
+  ApplicationStop:
+    - location: deploydoc/deploy.sh
+      timeout: 120
+      runas: ubuntu
+
+  BeforeInstall:
+    - location: deploydoc/deploy.sh
+      timeout: 120
+      runas: ubuntu
+
   AfterInstall:
-    - location: deploy.sh
+    - location: deploydoc/deploy.sh
       timeout: 300
-      runas: root
+      runas: ubuntu
