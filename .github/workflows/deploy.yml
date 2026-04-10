@@ -18,7 +18,7 @@ jobs:
 
       - name: Create package
         run: |
-          zip -r deploydoc.zip workflowprov1.0/deploydoc appspec.yml
+          zip -r deploydoc.zip workflowprov1.0/deploydoc
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
