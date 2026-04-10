@@ -3,7 +3,7 @@ name: Deploy JavaEE WAR to EC2 via CodeDeploy
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
