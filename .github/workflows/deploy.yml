@@ -20,22 +20,23 @@ jobs:
           WAR_FILE=$(find . -name "workflowmicropop.war" | head -n 1)
           APPSPEC=$(find . -name "appspec.yml" | head -n 1)
 
-          # 2. NETTOYAGE ULTIME (Supprime toute trace de Windows CRLF)
-          cat "$DEPLOY_SH" | tr -d '\r' > ./deploy.sh
-          cat "$APPSPEC" | tr -d '\r' > ./appspec.yml
+          # 2. NETTOYAGE RADICAL (Format Linux + Encodage UTF-8 pur)
+          # On supprime les \r (Windows) et on force l'encodage sans caractères invalides
+          cat "$DEPLOY_SH" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./deploy.sh
+          cat "$APPSPEC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./appspec.yml
           
-          # 3. Copie du WAR à la racine
+          # 3. Mise à plat du fichier WAR
           cp "$WAR_FILE" ./workflowmicropop.war
           
-          # 4. Droits d'exécution forcés
+          # 4. Attribution des droits d'exécution
           chmod +x ./deploy.sh
           
-          # 5. Debug visuel dans GitHub Actions
+          # 5. Debug visuel pour confirmer la présence des fichiers nettoyés
           ls -la
 
       - name: Create package
         run: |
-          # On zip uniquement les fichiers nettoyés à la racine
+          # On compresse les fichiers qui sont à la racine
           zip deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
       - name: Configure AWS credentials
