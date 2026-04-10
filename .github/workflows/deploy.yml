@@ -15,29 +15,31 @@ jobs:
 
       - name: Prepare Deployment Package
         run: |
-          # 1. Localisation des fichiers source
-          DEPLOY_SH=$(find . -name "deploy.sh" | head -n 1)
-          WAR_FILE=$(find . -name "workflowmicropop.war" | head -n 1)
-          APPSPEC=$(find . -name "appspec.yml" | head -n 1)
+          # 1. On crée un dossier de sortie propre (quarantaine)
+          mkdir -p ./out_package
 
-          # 2. NETTOYAGE RADICAL (Format Linux + Encodage UTF-8 pur)
-          # On supprime les \r (Windows) et on force l'encodage sans caractères invalides
-          cat "$DEPLOY_SH" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./deploy.sh
-          cat "$APPSPEC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./appspec.yml
+          # 2. Localisation des fichiers originaux
+          DEPLOY_SH_SRC=$(find . -name "deploy.sh" | head -n 1)
+          WAR_FILE_SRC=$(find . -name "workflowmicropop.war" | head -n 1)
+          APPSPEC_SRC=$(find . -name "appspec.yml" | head -n 1)
+
+          # 3. NETTOYAGE ET COPIE VERS LE DOSSIER DE SORTIE
+          # On force le format Linux et l'UTF-8 pur vers le dossier ./out_package
+          cat "$DEPLOY_SH_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
+          cat "$APPSPEC_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
+          cp "$WAR_FILE_SRC" ./out_package/workflowmicropop.war
+
+          # 4. On donne les droits d'exécution sur le fichier nettoyé
+          chmod +x ./out_package/deploy.sh
           
-          # 3. Mise à plat du fichier WAR
-          cp "$WAR_FILE" ./workflowmicropop.war
-          
-          # 4. Attribution des droits d'exécution
-          chmod +x ./deploy.sh
-          
-          # 5. Debug visuel pour confirmer la présence des fichiers nettoyés
-          ls -la
+          # 5. On vérifie que le dossier contient bien les 3 fichiers
+          ls -la ./out_package
 
       - name: Create package
         run: |
-          # On compresse les fichiers qui sont à la racine
-          zip deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
+          # On entre dans le dossier out_package pour zipper UNIQUEMENT son contenu
+          # Cela garantit qu'il n'y a pas de vieux fichiers ou de dossiers inutiles
+          cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
