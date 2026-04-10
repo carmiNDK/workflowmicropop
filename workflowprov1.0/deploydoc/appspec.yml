@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 
 files:
-  - source: deploydoc/
+  - source: /
     destination: /home/ubuntu/app
     overwrite: true
 
@@ -14,11 +14,11 @@ permissions:
 
 hooks:
   ApplicationStop:
-    - location: deploydoc/deploy.sh
+    - location: deploy.sh
       timeout: 120
-      runas: root # Indispensable pour asadmin
+      runas: root
       
   AfterInstall:
-    - location: deploydoc/deploy.sh
+    - location: deploy.sh
       timeout: 300
-      runas: root # Indispensable pour asadmin
+      runas: root
