@@ -6,18 +6,16 @@ files:
     destination: /home/ubuntu/app
     overwrite: true
 
-permissions:
-  - object: /home/ubuntu/app
-    owner: ubuntu
-    group: ubuntu
-    mode: 755
-
 hooks:
+  # On ajoute ce hook pour supprimer l'ancien WAR AVANT d'installer le nouveau
+  BeforeInstall:
+    - location: deploy.sh
+      timeout: 60
+      runas: root
   ApplicationStop:
     - location: deploy.sh
       timeout: 120
       runas: root
-      
   AfterInstall:
     - location: deploy.sh
       timeout: 300
