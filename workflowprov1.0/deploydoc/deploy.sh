@@ -1,28 +1,46 @@
 #!/bin/bash
 
-set -e  # stop si erreur
+set -e  # STOP si erreur
 
-echo "=== DEPLOYMENT START ==="
+APP_DIR="/home/ubuntu/app/deploydoc"
+WAR_FILE="workflowmicropop.war"
+ASADMIN="/opt/payara/bin/asadmin"
+PWD_FILE="/tmp/.asadmin_pass"
 
-# Variables
-PAYARA_HOME=/opt/payara
-WAR_PATH=/home/ubuntu/workflowmicropop/workflowmicropop.war
-APP_NAME=workflowmicropop
+echo "=== START DEPLOY ==="
 
-# Vérifier Payara
-echo "Checking Payara..."
-$PAYARA_HOME/bin/asadmin list-domains
+# --- sécurité fichier ---
+if [ ! -f "$APP_DIR/$WAR_FILE" ]; then
+  echo "ERROR: WAR not found"
+  exit 1
+fi
 
-# Undeploy ancienne version
-echo "Undeploy old version..."
-$PAYARA_HOME/bin/asadmin undeploy $APP_NAME || true
+# --- password file ---
+echo "AS_ADMIN_PASSWORD=micropop" > $PWD_FILE
 
-# Déployer nouvelle version
-echo "Deploying new version..."
-$PAYARA_HOME/bin/asadmin deploy \
-  --force=true \
-  --name $APP_NAME \
+# --- attendre Payara proprement ---
+echo "Waiting Payara..."
+for i in {1..30}; do
+  nc -z localhost 4848 && break
+  sleep 5
+done
+
+if ! nc -z localhost 4848; then
+  echo "ERROR: Payara not available"
+  exit 1
+fi
+
+# --- arrêt propre app (si existe) ---
+$ASADMIN --user admin --passwordfile $PWD_FILE undeploy workflowmicropop || true
+
+# --- déploiement ---
+echo "Deploying WAR..."
+$ASADMIN --user admin --passwordfile $PWD_FILE deploy \
+  --force \
   --contextroot /workflowmicropop \
-  $WAR_PATH
+  $APP_DIR/$WAR_FILE
 
-echo "=== DEPLOYMENT SUCCESS ==="
+# --- nettoyage ---
+rm -f $PWD_FILE
+
+echo "=== DEPLOY SUCCESS ==="
