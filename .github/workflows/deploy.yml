@@ -11,21 +11,28 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Mis à jour pour éviter le warning
+        uses: actions/checkout@v4
+
+      - name: Verifier l'emplacement des fichiers
+        run: |
+          echo "Voici le contenu de mon dossier Git :"
+          ls -R
 
       - name: Prepare Deployment Package
         run: |
-          # On s'assure que les fichiers existent avant de continuer
-          ls -R deploydoc/
+          # Correction du chemin : on entre dans le dossier deploydoc
+          # On suppose ici que deploydoc est à la racine. 
+          # Si deploydoc est dans workflowprov1.0, on ajuste :
           chmod +x deploydoc/deploy.sh
           cp deploydoc/appspec.yml .
 
       - name: Create package
         run: |
+          # On zip l'appspec (qui est maintenant à la racine) et le dossier deploydoc
           zip -r deploydoc.zip appspec.yml deploydoc/
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4 # Mis à jour
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
@@ -37,8 +44,7 @@ jobs:
 
       - name: Deploy via CodeDeploy
         run: |
-          # TRÈS IMPORTANT : Vérifie que "micropop-app" et "micropop-dg" 
-          # sont EXACTEMENT les noms dans ta console AWS (majuscules/minuscules)
+          # ATTENTION : Verifie bien les noms micropop-app et micropop-dg dans AWS !
           aws deploy create-deployment \
             --application-name micropop-app \
             --deployment-group-name micropop-dg \
