@@ -13,14 +13,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug - Lister tous les fichiers
+        run: |
+          echo "Recherche du fichier deploy.sh..."
+          find . -name "deploy.sh"
+
       - name: Prepare Deployment Package
         run: |
-          chmod +x deploydoc/deploy.sh
-          cp deploydoc/appspec.yml .
+          # Cette commande va chercher le script peu importe où il est et le rendre exécutable
+          SCRIPT_PATH=$(find . -name "deploy.sh")
+          if [ -z "$SCRIPT_PATH" ]; then
+            echo "ERREUR : deploy.sh est introuvable dans tout le projet !"
+            exit 1
+          fi
+          chmod +x "$SCRIPT_PATH"
+          
+          # On récupère le dossier parent du script (qui doit être deploydoc)
+          DEPLOY_DIR=$(dirname "$SCRIPT_PATH")
+          
+          # On place l'appspec à la racine pour CodeDeploy
+          cp "$DEPLOY_DIR/appspec.yml" .
 
       - name: Create package
         run: |
-          zip -r deploydoc.zip appspec.yml deploydoc/
+          # On zip l'appspec et le contenu du dossier qui contient deploy.sh
+          # On identifie dynamiquement le dossier
+          DEPLOY_DIR=$(dirname $(find . -name "deploy.sh"))
+          zip -r deploydoc.zip appspec.yml "$DEPLOY_DIR"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
