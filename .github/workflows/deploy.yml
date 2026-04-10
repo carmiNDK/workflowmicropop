@@ -6,20 +6,20 @@ on:
       - main
 
 jobs:
-  build-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Prepare package (deploydoc only)
-      - name: Create deployment package
-        run: |
-          zip -r deploydoc.zip deploydoc appspec.yml
+      - name: Debug files
+        run: ls -R
 
-      # 3. Configure AWS credentials
+      - name: Create package
+        run: |
+          zip -r deploydoc.zip workflowprov1.0/deploydoc appspec.yml
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -27,15 +27,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: eu-west-3
 
-      # 4. Upload to S3
-      - name: Upload to S3
+      - name: Upload S3
         run: |
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip
-
-      # 5. Trigger CodeDeploy
-      - name: Deploy to EC2 via CodeDeploy
-        run: |
-          aws deploy create-deployment \
-            --application-name micropop-app \
-            --deployment-group-name micropop-dg \
-            --s3-location bucket=micropopdev,key=deploydoc.zip,bundleType=zip
