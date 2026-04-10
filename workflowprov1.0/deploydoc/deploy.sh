@@ -1,5 +1,5 @@
 #!/bin/bash
-# Redirection vers un log simple
+# Redirection vers le log
 exec > >(tee -a /home/ubuntu/deploy_script.log) 2>&1
 
 ASADMIN="/opt/payara/bin/asadmin"
@@ -7,26 +7,23 @@ APP_DIR="/home/ubuntu/app"
 WAR_FILE="workflowmicropop.war"
 PWD_FILE="/tmp/.asadmin_pass"
 
-echo "=== DEBUT DU DEPLOIEMENT : $LIFECYCLE_EVENT ==="
+echo "=== DEPLOY EVENT: $LIFECYCLE_EVENT [$(date)] ==="
 echo "AS_ADMIN_PASSWORD=micropop" > $PWD_FILE
 
 if [ "$LIFECYCLE_EVENT" == "ApplicationStop" ]; then
-    echo "Undeploy de l'ancienne version..."
-    $ASADMIN --user admin --passwordfile $PWD_FILE undeploy workflowmicropop || true
+    $ASADMIN --user admin --passwordfile $PWD_FILE undeploy workflowmicropop || echo "Pas d'app à stopper."
 
 elif [ "$LIFECYCLE_EVENT" == "AfterInstall" ]; then
-    echo "Attente de Payara..."
-    # Attendre que le port 4848 soit ouvert (timeout 60s)
-    for i in {1..12}; do
+    echo "Vérification de Payara..."
+    for i in {1..10}; do
         if nc -z localhost 4848; then
-            echo "Payara OK !"
+            echo "Payara est prêt !"
             break
         fi
-        echo "Attente..."
         sleep 5
     done
 
-    echo "Déploiement du WAR..."
+    echo "Déploiement de $WAR_FILE..."
     $ASADMIN --user admin --passwordfile $PWD_FILE deploy \
       --force \
       --contextroot /workflowmicropop \
@@ -34,4 +31,3 @@ elif [ "$LIFECYCLE_EVENT" == "AfterInstall" ]; then
 fi
 
 rm -f $PWD_FILE
-echo "=== FIN DU DEPLOIEMENT ==="
