@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -10551,7 +10550,7 @@ public class WorkfloDAO {
 			st15020250050 = ConnexionBDLocal.getConnexion().createStatement();
 			String req = "select Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe,sum(Doc.PretAccorder) as somme from groupegl as Gp inner join user as Us on Gp.PromoteurGroupe=Us.Iduser inner join membregroupe as mg on Gp.Id=mg.IdGroupeLisanga inner join dossiercreditgl as Doc on mg.IdClientMembre=Doc.IdMembreGL inner join branche as br on br.IdBranche=Us.IdBranche where br.LibelleBranche='"
 					+ LibelleAgenceDossierBM
-					+ "' and Gp.EtatGroupGL='Comite' group by Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe having somme >2000 and somme <=5000 order by Gp.NomGroupe asc";
+					+ "' and Doc.EtatDossierGL='Comite' group by Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe having somme >2000 and somme <=5000 order by Gp.NomGroupe asc";
 			res15020250050 = st15020250050.executeQuery(req);
 			while (res15020250050.next()) {
 				WorkflowEntite wk = new WorkflowEntite();
@@ -10582,7 +10581,7 @@ public class WorkfloDAO {
 		List<WorkflowEntite> ListeDossierCreditGLPourComiteDirection = new ArrayList<>();
 		try {
 			st150202500500 = ConnexionBDLocal.getConnexion().createStatement();
-			String req = "select Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe,sum(Doc.PretAccorder) as somme from groupegl as Gp inner join user as Us on Gp.PromoteurGroupe=Us.Iduser inner join membregroupe as mg on Gp.Id=mg.IdGroupeLisanga inner join dossiercreditgl as Doc on mg.IdClientMembre=Doc.IdMembreGL inner join branche as br on br.IdBranche=Us.IdBranche where Gp.EtatGroupGL='Comite' group by Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe having somme >5000 order by Gp.NomGroupe asc";
+			String req = "select Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe,sum(Doc.PretAccorder) as somme from groupegl as Gp inner join user as Us on Gp.PromoteurGroupe=Us.Iduser inner join membregroupe as mg on Gp.Id=mg.IdGroupeLisanga inner join dossiercreditgl as Doc on mg.IdClientMembre=Doc.IdMembreGL inner join branche as br on br.IdBranche=Us.IdBranche where Doc.EtatDossierGL='Comite' group by Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe having somme >5000 order by Gp.NomGroupe asc";
 			res150202500500 = st150202500500.executeQuery(req);
 			while (res150202500500.next()) {
 				WorkflowEntite wk = new WorkflowEntite();
@@ -10614,7 +10613,7 @@ public class WorkfloDAO {
 		List<WorkflowEntite> ListeDossierCreditGLVerificationPourCI = new ArrayList<>();
 		try {
 			st1502025005002 = ConnexionBDLocal.getConnexion().createStatement();
-			String req = "select Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe,sum(Doc.PretAccorder) as somme from groupegl as Gp inner join user as Us on Gp.PromoteurGroupe=Us.Iduser inner join membregroupe as mg on Gp.Id=mg.IdGroupeLisanga inner join dossiercreditgl as Doc on mg.IdClientMembre=Doc.IdMembreGL inner join branche as br on br.IdBranche=Us.IdBranche where Gp.EtatGroupGL='Terminer' or Gp.EtatGroupGL='Analyse' group by Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe order by Gp.NomGroupe asc";
+			String req = "select Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe,sum(Doc.PretAccorder) as somme from groupegl as Gp inner join user as Us on Gp.PromoteurGroupe=Us.Iduser inner join membregroupe as mg on Gp.Id=mg.IdGroupeLisanga inner join dossiercreditgl as Doc on mg.IdClientMembre=Doc.IdMembreGL inner join branche as br on br.IdBranche=Us.IdBranche where Doc.EtatDossierGL='Terminer' or Doc.EtatDossierGL='Analyse' group by Gp.Id,Gp.NumeroGroupeCBS,Gp.NomGroupe,Gp.BrancheGroupe,Us.NomsUser,Gp.EtatGroupGL,Gp.NbrCycleGroupe order by Gp.NomGroupe asc";
 			res1502025005002 = st1502025005002.executeQuery(req);
 			while (res1502025005002.next()) {
 				WorkflowEntite wk = new WorkflowEntite();
