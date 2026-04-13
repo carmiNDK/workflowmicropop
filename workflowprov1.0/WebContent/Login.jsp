@@ -32,7 +32,7 @@
 				alt="Logo_KwikLoan">
 			<hr>
 			<h4 style="text-align: center; font-style: italic; margin: 0;">Connectez-vous
-				à votre compte (V100)</h4>
+				à votre compte (V250)</h4>
 			<form class="ui form" action="Authentification.php" method="POST"
 				name="login-form">
 				<c:if test="${not empty error}">
