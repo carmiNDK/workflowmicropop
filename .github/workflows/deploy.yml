@@ -1,17 +1,13 @@
 name: Build and Deploy JavaEE WAR to EC2
 
 on:
+  workflow_dispatch:
   schedule:
-    # 22:40 UTC correspond à 23:40 à Kinshasa (UTC+1)
-    - cron: '40 22 * * 1'
-  workflow_dispatch: {}
+    - cron: '55 22 * * 1'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,40 +22,28 @@ jobs:
         run: |
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
-
-          # 1. Compilation
           find . -name "*.java" > sources.txt
           LIBS=$(find . -name "*.jar" | tr '\n' ':')
           javac -d build/WEB-INF/classes -cp "$LIBS" @sources.txt
-
-          # 2. Assemblage du WAR
-          # On vérifie si WebContent existe
           WEB_DIR=$([ -d "WebContent" ] && echo "WebContent" || echo "web")
           cp -r $WEB_DIR/* build/
-          
-          # 3. Création du fichier final
           cd build && jar -cvf ../dist/workflowmicropop.war .
-          cd ..
 
-      - name: Prepare Deployment Package
+      - name: Prepare Package
         run: |
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
-
-          WAR_FILE="dist/workflowmicropop.war"
-          DEPLOY_SH_SRC=$(find . -name "deploy.sh" | head -n 1)
-          APPSPEC_SRC=$(find . -name "appspec.yml" | head -n 1)
-
-          cat "$DEPLOY_SH_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
-          cat "$APPSPEC_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
-          cp "$WAR_FILE" ./out_package/workflowmicropop.war
+          DEPLOY_SH=$(find . -name "deploy.sh" | head -n 1)
+          APPSPEC=$(find . -name "appspec.yml" | head -n 1)
+          cat "$DEPLOY_SH" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
+          cat "$APPSPEC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
+          cp dist/workflowmicropop.war ./out_package/workflowmicropop.war
           chmod +x ./out_package/deploy.sh
 
-      - name: Create package
-        run: |
-          cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
+      - name: Create Zip
+        run: cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
-      - name: Configure AWS credentials
+      - name: AWS Config
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
@@ -67,10 +51,9 @@ jobs:
           aws-region: eu-west-3
 
       - name: Upload to S3
-        run: |
-          aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip --region eu-west-3
+        run: aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip
 
-      - name: Deploy via CodeDeploy
+      - name: CodeDeploy
         run: |
           aws deploy create-deployment \
             --application-name micropop-app \
