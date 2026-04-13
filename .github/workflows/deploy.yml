@@ -3,8 +3,7 @@ name: Build and Deploy JavaEE WAR to EC2
 on:
   workflow_dispatch: {}
   schedule:
-    # 23:55 UTC = 00:55 à Kinshasa
-    - cron: '47 23 * * 1'
+    - cron: '55 23 * * 1' # Lundi à 00:15 UTC (01:15 Kinshasa)
 
 jobs:
   build-and-deploy:
@@ -20,47 +19,48 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      # ÉTAPE 1 : COMPILATION (AVEC FIX POUR LES ACCENTS)
+      # ÉTAPE 1 : COMPILATION AVEC LIBRAIRIES EXTERNES
       - name: Build WAR
         run: |
           cd "workflowprov1.0"
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
           
-          # Liste des sources
+          # TÉLÉCHARGEMENT DES LIBS SERVLET (Crucial pour JavaEE)
+          # Cela évite les erreurs "package javax.servlet does not exist"
+          curl -L https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar -o servlet-api.jar
+          curl -L https://repo1.maven.org/maven2/javax/servlet/jsp/javax.servlet.jsp-api/2.3.1/javax.servlet.jsp-api-2.3.1.jar -o jsp-api.jar
+
+          # On cherche les sources
           find src -name "*.java" > sources.txt
           
-          # Liste des librairies (Classpath)
+          # On construit le classpath (Libs projet + Libs JavaEE téléchargées)
           LIBS=$(find . -name "*.jar" | tr '\n' ':')
           
-          # COMPILATION AVEC FORCAGE DE L'ENCODAGE
+          # COMPILATION : Forçage encodage + Classpath complet
           javac -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$LIBS" @sources.txt
           
-          # Assemblage du contenu Web
+          # Assemblage du dossier build
           cp -r WebContent/* build/
-          
-          # Création du fichier WAR
           cd build && jar -cvf ../dist/workflowmicropop.war .
-          echo "Compilation terminée avec succès."
+          echo "Compilation réussie !"
 
-      # ÉTAPE 2 : PRÉPARATION DU DOSSIER DE DÉPLOIEMENT
+      # ÉTAPE 2 : PRÉPARATION DU ZIP
       - name: Prepare Package
         run: |
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
           
           ROOT_DIR="workflowprov1.0"
-          
-          # Copie du nouveau WAR
           cp "$ROOT_DIR/dist/workflowmicropop.war" ./out_package/
           
-          # Nettoyage et transfert des scripts CodeDeploy
+          # Nettoyage des scripts (Windows vers Linux)
           cat "$ROOT_DIR/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
           cat "$ROOT_DIR/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
           
           chmod +x ./out_package/deploy.sh
 
-      # ÉTAPE 3 : ZIP ET ENVOI VERS AWS
+      # ÉTAPE 3 : ENVOI SUR AWS
       - name: Create Zip and Deploy
         run: |
           cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
@@ -70,10 +70,8 @@ jobs:
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }}
           export AWS_DEFAULT_REGION=eu-west-3
           
-          # Envoi sur S3
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip
           
-          # Déclenchement CodeDeploy
           aws deploy create-deployment \
             --application-name micropop-app \
             --deployment-group-name micropop-dg \
