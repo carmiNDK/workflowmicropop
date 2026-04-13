@@ -3,7 +3,8 @@ name: Build and Deploy JavaEE WAR to EC2
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '42 23 * * 1'
+    # 23:55 UTC = 00:55 à Kinshasa
+    - cron: '47 23 * * 1'
 
 jobs:
   build-and-deploy:
@@ -19,54 +20,60 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      # ÉTAPE 1 : COMPILATION AVEC FIX ENCODAGE
+      # ÉTAPE 1 : COMPILATION (AVEC FIX POUR LES ACCENTS)
       - name: Build WAR
         run: |
           cd "workflowprov1.0"
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
           
-          # On cherche les sources
+          # Liste des sources
           find src -name "*.java" > sources.txt
           
-          # On cherche les librairies
+          # Liste des librairies (Classpath)
           LIBS=$(find . -name "*.jar" | tr '\n' ':')
           
-          # COMPILATION : On ajoute -encoding ISO-8859-1 pour gérer les accents
+          # COMPILATION AVEC FORCAGE DE L'ENCODAGE
           javac -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$LIBS" @sources.txt
           
-          # Assemblage
+          # Assemblage du contenu Web
           cp -r WebContent/* build/
+          
+          # Création du fichier WAR
           cd build && jar -cvf ../dist/workflowmicropop.war .
-          echo "Succès : WAR créé avec succès."
+          echo "Compilation terminée avec succès."
 
-      # ÉTAPE 2 : PRÉPARATION DU PACKAGE
+      # ÉTAPE 2 : PRÉPARATION DU DOSSIER DE DÉPLOIEMENT
       - name: Prepare Package
         run: |
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
           
           ROOT_DIR="workflowprov1.0"
+          
+          # Copie du nouveau WAR
           cp "$ROOT_DIR/dist/workflowmicropop.war" ./out_package/
           
-          # Nettoyage des scripts
+          # Nettoyage et transfert des scripts CodeDeploy
           cat "$ROOT_DIR/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
           cat "$ROOT_DIR/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
           
           chmod +x ./out_package/deploy.sh
 
-      - name: Create Zip
-        run: cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
-
-      # ÉTAPE 3 : AWS ET DÉPLOIEMENT
-      - name: AWS Config & Deploy
+      # ÉTAPE 3 : ZIP ET ENVOI VERS AWS
+      - name: Create Zip and Deploy
         run: |
+          cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
+          cd ..
+          
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }}
           export AWS_DEFAULT_REGION=eu-west-3
           
+          # Envoi sur S3
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip
           
+          # Déclenchement CodeDeploy
           aws deploy create-deployment \
             --application-name micropop-app \
             --deployment-group-name micropop-dg \
