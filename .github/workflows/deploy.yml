@@ -3,8 +3,8 @@ name: Build and Deploy JavaEE WAR to EC2
 on:
   workflow_dispatch: {}
   schedule:
-    # 23:15 UTC = 00:15 à Kinshasa (UTC+1)
-    - cron: '15 23 * * 1'
+    # 23:45 UTC = 00:45 à Kinshasa
+    - cron: '33 23 * * 1'
 
 jobs:
   build-and-deploy:
@@ -21,36 +21,23 @@ jobs:
 
       - name: Build WAR
         run: |
-          # ON SE PLACE DANS LE SOUS-DOSSIER
           cd "workflowprov1.0"
-          
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
-          
-          # Compilation avec les bons chemins
           find src -name "*.java" > sources.txt
           LIBS=$(find . -name "*.jar" | tr '\n' ':')
           javac -d build/WEB-INF/classes -cp "$LIBS" @sources.txt
-          
-          # Assemblage
           cp -r WebContent/* build/
           cd build && jar -cvf ../dist/workflowmicropop.war .
 
       - name: Prepare Package
         run: |
-          # Toujours travailler depuis le sous-dossier
-          ROOT_DIR="workflowprov1.0"
-          
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
-          
-          # On récupère le WAR, appspec et deploy.sh dans le sous-dossier
-          cp "$ROOT_DIR/dist/workflowmicropop.war" ./out_package/
-          
-          # Nettoyage des scripts
-          cat "$ROOT_DIR/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
-          cat "$ROOT_DIR/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
-          
+          # On utilise les chemins exacts vus sur ton image
+          cp "workflowprov1.0/dist/workflowmicropop.war" ./out_package/
+          cat "workflowprov1.0/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
+          cat "workflowprov1.0/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
           chmod +x ./out_package/deploy.sh
 
       - name: Create Zip
