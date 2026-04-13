@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '30 18 * * 1' # Lundi 19h30 Kinshasa (UTC+1)
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -13,40 +16,69 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Force la récupération de tout l'historique pour éviter le cache
+          fetch-depth: 0
 
-      - name: Prepare Deployment Package
+      # =========================
+      # FORCE BUILD WAR (NO REUSE)
+      # =========================
+      - name: Build fresh WAR (NO OLD VERSION)
         run: |
-          # 1. Nettoyage total avant de commencer
-          rm -rf ./out_package deploydoc.zip
-          mkdir -p ./out_package
+          echo "🔨 Génération FORCÉE du WAR..."
 
-          # 2. LOCALISATION INTELLIGENTE
-          # On cherche le WAR le plus RECENT dans tout le projet
-          WAR_FILE_SRC=$(find . -name "workflowmicropop.war" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" ")
+          # nettoyage ancien war éventuel
+          rm -f workflowmicropop.war
+
+          # tentative build Java EE simple
+          if [ -d "./src" ]; then
+            echo "📦 Compilation Java EE..."
+
+            mkdir -p build_temp
+            find . -name "*.java" > sources.txt
+
+            if [ -s sources.txt ]; then
+              javac -d build_temp @sources.txt
+
+              jar -cvf workflowmicropop.war -C build_temp .
+              echo "✅ WAR généré avec succès"
+            else
+              echo "❌ Aucun fichier Java trouvé"
+              exit 1
+            fi
+          else
+            echo "❌ Projet Java EE invalide (pas de src)"
+            exit 1
+          fi
+
+      # =========================
+      # DEPLOY PACKAGE (deploydoc)
+      # =========================
+      - name: Prepare deploydoc package
+        run: |
+          echo "📦 Création dossier deploydoc..."
+
+          rm -rf deploydoc deploydoc.zip
+          mkdir -p deploydoc
+
           DEPLOY_SH_SRC=$(find . -name "deploy.sh" -type f | head -n 1)
           APPSPEC_SRC=$(find . -name "appspec.yml" -type f | head -n 1)
 
-          echo "DEBUG: Fichier WAR detecté : $WAR_FILE_SRC"
+          if [ ! -f "$DEPLOY_SH_SRC" ] || [ ! -f "$APPSPEC_SRC" ]; then
+            echo "❌ deploy.sh ou appspec.yml introuvable"
+            exit 1
+          fi
 
-          # 3. TRANSFERT ET NETTOYAGE
-          # On utilise 'cp -p' pour préserver les attributs et on nettoie l'encodage
-          cat "$DEPLOY_SH_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
-          cat "$APPSPEC_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
-          
-          # IMPORTANT: On copie le WAR détecté
-          cp "$WAR_FILE_SRC" ./out_package/workflowmicropop.war
+          cp workflowmicropop.war deploydoc/
+          cat "$DEPLOY_SH_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > deploydoc/deploy.sh
+          cat "$APPSPEC_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > deploydoc/appspec.yml
 
-          chmod +x ./out_package/deploy.sh
-          
-          # 4. VERIFICATION DE LA TAILLE (Pour être sûr que c'est le bon)
-          echo "Taille du WAR a deployer :"
-          ls -lh ./out_package/workflowmicropop.war
+          chmod +x deploydoc/deploy.sh
 
-      - name: Create package
+          echo "📊 Contenu deploydoc:"
+          ls -lh deploydoc
+
+      - name: Create ZIP package
         run: |
-          # Création du ZIP à partir du dossier propre
-          cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
+          zip -r deploydoc.zip deploydoc
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -57,7 +89,6 @@ jobs:
 
       - name: Upload to S3
         run: |
-          # On ecrase systematiquement sur S3
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip --region eu-west-3
 
       - name: Deploy via CodeDeploy
