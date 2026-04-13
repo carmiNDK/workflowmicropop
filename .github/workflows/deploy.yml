@@ -2,75 +2,63 @@ name: Build and Deploy JavaEE WAR to EC2
 
 on:
   schedule:
-    - cron: '0 20 * * 1' # Lundi à 20h00 UTC
-  workflow_dispatch:     # Exécution manuelle
+    # 22:40 UTC correspond à 23:40 à Kinshasa (UTC+1)
+    - cron: '40 22 * * 1'
+  workflow_dispatch: {}
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Configuration de l'environnement Java
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
 
-      # 2. COMPILATION ET GÉNÉRATION DU WAR
       - name: Build WAR
         run: |
-          # Création des dossiers de travail
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
 
-          # 1. Compilation des sources
-          # On cherche les .java dans 'src' et on utilise les libs dans 'WebContent/WEB-INF/lib'
-          find src -name "*.java" > sources.txt
-          LIBS=$(find WebContent/WEB-INF/lib -name "*.jar" | tr '\n' ':')
+          # 1. Compilation
+          find . -name "*.java" > sources.txt
+          LIBS=$(find . -name "*.jar" | tr '\n' ':')
           javac -d build/WEB-INF/classes -cp "$LIBS" @sources.txt
 
           # 2. Assemblage du WAR
-          # On copie tout le contenu de WebContent (JSP, WEB-INF/lib, etc.)
-          cp -r WebContent/* build/
+          # On vérifie si WebContent existe
+          WEB_DIR=$([ -d "WebContent" ] && echo "WebContent" || echo "web")
+          cp -r $WEB_DIR/* build/
           
-          # On s'assure que les .classes compilés sont inclus dans le build
-          # (javac les a déjà mis dans build/WEB-INF/classes via l'option -d)
-          
-          # 3. Création du fichier WAR final
+          # 3. Création du fichier final
           cd build && jar -cvf ../dist/workflowmicropop.war .
           cd ..
-          
-          echo "Vérification : Contenu du dossier dist"
-          ls -lh dist/
 
-      # 3. PRÉPARATION DU DOSSIER DE SORTIE (CLEANUP)
       - name: Prepare Deployment Package
         run: |
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
 
-          # Localisation du WAR et des scripts CodeDeploy
           WAR_FILE="dist/workflowmicropop.war"
           DEPLOY_SH_SRC=$(find . -name "deploy.sh" | head -n 1)
           APPSPEC_SRC=$(find . -name "appspec.yml" | head -n 1)
 
-          # Nettoyage des caractères de fin de ligne Windows (\r)
           cat "$DEPLOY_SH_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
           cat "$APPSPEC_SRC" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
           cp "$WAR_FILE" ./out_package/workflowmicropop.war
-
           chmod +x ./out_package/deploy.sh
 
-      # 4. CRÉATION DU ZIP POUR S3
       - name: Create package
         run: |
           cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
 
-      # 5. CONFIGURATION AWS
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -78,12 +66,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: eu-west-3
 
-      # 6. TRANSFERT VERS S3
       - name: Upload to S3
         run: |
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip --region eu-west-3
 
-      # 7. DÉPLOIEMENT VIA CODEDEPLOY
       - name: Deploy via CodeDeploy
         run: |
           aws deploy create-deployment \
