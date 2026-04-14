@@ -1,7 +1,9 @@
 name: Local Build and Deploy to GlassFish
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: {} # Permet de lancer manuellement depuis GitHub
+  schedule:
+    - cron: '5 0 * * 3' # Déclenchement automatique chaque mercredi à 00h05
 
 jobs:
   local-job:
@@ -20,7 +22,7 @@ jobs:
           $TEMP_SRC = Join-Path $PROJECT_ROOT "src_compiled"
           $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
-          # 1. Nettoyage
+          # 1. Nettoyage des anciens fichiers
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
           if (Test-Path $TEMP_SRC) { Remove-Item -Recurse -Force $TEMP_SRC }
           if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
@@ -28,19 +30,18 @@ jobs:
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          # 2. Copie du CONTENU de WebContent (C'est ici que ça se joue)
+          # 2. Copie du CONTENU de WebContent (indispensable pour éviter la 404)
           $webContentPath = Join-Path $PROJECT_ROOT "WebContent"
-          Write-Host "Copie du contenu de $webContentPath vers la racine du build..."
-          # On utilise \* pour copier les fichiers/dossiers à l'intérieur, pas le dossier lui-même
+          Write-Host "Préparation du contenu Web depuis $webContentPath"
           Copy-Item -Path "$webContentPath\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. Shadow Copy pour les accents (Copie de travail)
+          # 3. Shadow Copy pour les accents (Évite les erreurs de tokens Crédit/Transfert)
           Copy-Item -Path (Join-Path $PROJECT_ROOT "src") -Destination $TEMP_SRC -Recurse
           Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object {
               (Get-Content $_.FullName) -replace 'é', 'e' | Set-Content $_.FullName
           }
 
-          # 4. Dépendances de compilation (On exclut Jersey et JavaEE du WAR final)
+          # 4. Téléchargement des dépendances nécessaires à la compilation
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
               "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
@@ -53,36 +54,45 @@ jobs:
               Invoke-WebRequest -Uri $essentialDeps[$jarName] -OutFile (Join-Path $libPath $jarName)
           }
 
-          # 5. Compilation
+          # 5. Compilation avec le compilateur Eclipse (ECJ)
           $jars = Get-ChildItem -Path $libPath -Filter *.jar
           $cp = ($jars.FullName -join ";")
           $sourcesFiles = Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           [System.IO.File]::WriteAllLines((Join-Path $PROJECT_ROOT "sources.txt"), $sourcesFiles)
           
-          java -jar (Join-Path $libPath "ecj-3.26.0.jar") -8 -encoding UTF-8 -warn:none -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp "$cp" "@sources.txt"
+          $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
+          java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp "$cp" "@sources.txt"
 
-          # 6. Création du WAR
+          # 6. Création du WAR final
           if ($LASTEXITCODE -eq 0) {
               $warPath = Join-Path $DIST_DIR "workflowmicropop.war"
               
-              # Nettoyage avant empaquetage : on enlève les libs fournies par GlassFish
+              # On retire les JARs de build pour éviter les conflits au déploiement
               Remove-Item (Join-Path $libPath "javaee-api-7.0.jar") -Force
               Remove-Item (Join-Path $libPath "ecj-3.26.0.jar") -Force
               
               cd $BUILD_DIR
               jar -cvf $warPath .
-              Write-Host "WAR généré avec succès dans $warPath"
+              Write-Host "Fichier WAR généré : $warPath"
+              # Nettoyage de la copie temporaire
+              Remove-Item -Recurse -Force $TEMP_SRC
           } else {
+              Write-Error "La compilation a échoué."
               exit 1
           }
 
       - name: Deploy to Local GlassFish
         shell: powershell
         run: |
+          # Correction du bug de détection JDK de GlassFish
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
+          
           if (Test-Path $warFile) {
-              # On force le context root pour être sûr
+              Write-Host "Déploiement en cours sur GlassFish (Port 30442)..."
               & $asadmin deploy --force=true --contextroot "workflowmicropop" --port 30442 $warFile
+          } else {
+              Write-Error "Le fichier WAR est introuvable."
+              exit 1
           }
