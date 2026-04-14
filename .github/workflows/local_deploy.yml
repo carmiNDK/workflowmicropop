@@ -1,0 +1,65 @@
+name: Local Build and Deploy to GlassFish
+
+on:
+  workflow_dispatch: {} # Permet de cliquer sur "Run workflow"
+  schedule:
+    - cron: '30 4 * * 2' # S'exécutera tout seul chaque Mardi à 04h30 UTC
+
+jobs:
+  local-job:
+    runs-on: self-hosted # Indique à GitHub d'utiliser ton PC
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with ECJ (Windows)
+        shell: powershell
+        run: |
+          # 1. Entrer dans le dossier du projet
+          cd "workflowprov1.0"
+          
+          # 2. Nettoyage et création des répertoires
+          if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
+          $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
+          $null = New-Item -ItemType Directory -Force -Path "dist"
+
+          # 3. Téléchargement des dépendances pour la compilation
+          Write-Host "Récupération des outils de compilation..."
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
+
+          # 4. Nettoyage automatique des caractères spéciaux Ã©
+          Write-Host "Correction de l'encodage du code source..."
+          Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object {
+              $content = Get-Content $_.FullName -Raw
+              $content = $content -replace 'Ã©', 'e'
+              $content = $content -replace 'é', 'e'
+              [System.IO.File]::WriteAllText($_.FullName, $content, (New-Object System.Text.UTF8Encoding($false)))
+          }
+
+          # 5. Compilation via le moteur Eclipse (ECJ)
+          Write-Host "Compilation en cours..."
+          $sources = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
+          $sources | Out-File -FilePath sources.txt -Encoding ascii
+          
+          # Classpath : inclut le dossier courant et la servlet-api
+          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" @sources.txt
+
+          # 6. Assemblage du WAR
+          Write-Host "Assemblage du fichier WAR..."
+          cd build
+          jar -cvf ../dist/workflowmicropop.war .
+
+      - name: Deploy to Local GlassFish
+        shell: powershell
+        run: |
+          # --- CONFIGURATION GLASSFISH 4.1.1 ---
+          # Chemin vers l'exécutable (basé sur ton image)
+          $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
+          $warFile = "workflowprov1.0\dist\workflowmicropop.war"
+          $port = "30442" # Ton port DAS spécifique
+          
+          Write-Host "Déploiement en cours sur le port $port..."
+          # L'opérateur & est obligatoire car il y a des espaces dans le chemin
+          & $asadmin deploy --force=true --port $port $warFile
