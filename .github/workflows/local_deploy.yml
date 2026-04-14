@@ -17,17 +17,28 @@ jobs:
           cd "workflowprov1.0"
           $PROJECT_ROOT = $PWD.Path
           $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
+          $TEMP_SRC = Join-Path $PROJECT_ROOT "src_compiled"
           
-          # 1. Nettoyage et préparation
+          # 1. Nettoyage des anciens dossiers de build
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
+          if (Test-Path $TEMP_SRC) { Remove-Item -Recurse -Force $TEMP_SRC }
+          
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          # 2. Copie Web source
+          # 2. Copie Web source vers build
           $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
           Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. Dépendances (indispensables)
+          # 3. Traitement des accents SANS toucher au code original
+          # On crée une copie de 'src' vers 'src_compiled' en remplaçant 'é' par 'e'
+          Write-Host "Création d'une copie de travail pour corriger les accents..."
+          Copy-Item -Path (Join-Path $PROJECT_ROOT "src") -Destination $TEMP_SRC -Recurse
+          Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object {
+              (Get-Content $_.FullName) -replace 'é', 'e' | Set-Content $_.FullName
+          }
+
+          # 4. Téléchargement des dépendances
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
               "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
@@ -37,7 +48,6 @@ jobs:
               "jersey-servlet-1.19.4.jar" = "https://repo1.maven.org/maven2/com/sun/jersey/jersey-servlet/1.19.4/jersey-servlet-1.19.4.jar"
               "ecj-3.26.0.jar" = "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar"
           }
-
           foreach ($jarName in $essentialDeps.Keys) {
               $target = Join-Path $libPath $jarName
               if (-not (Test-Path $target)) {
@@ -45,28 +55,24 @@ jobs:
               }
           }
 
-          # 4. Classpath (Construction propre)
+          # 5. Classpath et Liste des sources
           $jars = Get-ChildItem -Path $libPath -Filter *.jar
           $cp = ($jars.FullName -join ";")
-
-          # 5. Compilation : On utilise l'encodage par défaut de Windows (Default) 
-          # pour correspondre à l'encodage de tes fichiers sources créés sous Windows/Eclipse.
-          $sourcesFiles = Get-ChildItem -Path (Join-Path $PROJECT_ROOT "src") -Filter *.java -Recurse | ForEach-Object { $_.FullName }
+          $sourcesFiles = Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object { $_.FullName }
+          [System.IO.File]::WriteAllLines((Join-Path $PROJECT_ROOT "sources.txt"), $sourcesFiles)
           
-          # Utilisation de -Encoding Default pour éviter le problème "File missing" (BOM UTF8)
-          $sourcesFiles | Out-File -FilePath (Join-Path $PROJECT_ROOT "sources.txt") -Encoding Default
-          
+          # 6. Compilation
           $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
           $outDir = Join-Path $BUILD_DIR "WEB-INF/classes"
+          java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d $outDir -cp "$cp" "@sources.txt"
 
-          # Utilisation de l'argument -warn:none pour ignorer les centaines d'avertissements et voir les erreurs réelles
-          java -jar $ecjJar -8 -encoding Default -warn:none -d $outDir -cp "$cp" "@sources.txt"
-
-          # 6. Création du WAR
+          # 7. Création du WAR
           if ($LASTEXITCODE -eq 0) {
-              Write-Host "Compilation réussie."
+              Write-Host "Compilation réussie sur la copie de travail."
               cd $BUILD_DIR
               jar -cvf "../dist/workflowmicropop.war" .
+              # Nettoyage de la copie temporaire après succès
+              Remove-Item -Recurse -Force $TEMP_SRC
           } else {
               Write-Error "Échec de compilation."
               exit 1
