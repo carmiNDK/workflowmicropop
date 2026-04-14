@@ -13,12 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build WAR with Dynamic Jersey Fix
+      - name: Build WAR with Jersey Bypasser
         shell: powershell
         run: |
           cd "workflowprov1.0"
           
-          # 1. Préparation structure
+          # 1. Structure
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
@@ -29,48 +29,36 @@ jobs:
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
 
-          # 3. CHIRURGIE DYNAMIQUE : On lit le package attendu par Jersey dans ton web.xml
-          $targetPackage = "com.fix" # Par défaut
-          if (Test-Path "build/WEB-INF/web.xml") {
-              $xmlContent = Get-Content "build/WEB-INF/web.xml" -Raw
-              if ($xmlContent -match '<param-name>com.sun.jersey.config.property.packages</param-name>\s*<param-value>([^<]+)</param-value>') {
-                  $targetPackage = $matches[1].Split(';')[0].Trim()
-                  Write-Host "Package Jersey détecté : $targetPackage"
-              }
-          }
-
-          # 4. CRÉATION DE LA CLASSE DANS LE BON PACKAGE
-          $packagePath = $targetPackage.Replace('.', '/')
-          $null = New-Item -ItemType Directory -Force -Path "src/$packagePath"
-          $ghostClass = @"
-          package $targetPackage;
-          import javax.ws.rs.Path;
-          import javax.ws.rs.GET;
-          @Path("/healthcheck")
-          public class GlassfishFix {
-              @GET
-              public String check() { return "Jersey Fixed"; }
-          }
+          # 3. LE COUP DE MAÎTRE : Désactiver Jersey au niveau du déploiement
+          # On crée un fichier glassfish-web.xml s'il n'existe pas pour forcer le délégué
+          $glassfishWeb = @"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE glassfish-web-app PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 Servlet 3.0//EN" "http://glassfish.org/dtds/glassfish-web-app_3_0-1.dtd">
+          <glassfish-web-app>
+            <context-root>/workflowmicropop</context-root>
+            <property name="jersey.config.server.provider.bundle.whitelist" value="none" />
+            <property name="jersey.config.server.provider.scanning.recursive" value="false" />
+          </glassfish-web-app>
           "@
-          $ghostClass | Out-File -FilePath "src/$packagePath/GlassfishFix.java" -Encoding utf8
+          $glassfishWeb | Out-File -FilePath "build/WEB-INF/glassfish-web.xml" -Encoding utf8
 
-          # 5. Injection des JARs Jersey & API
-          $libs = @(
-              "https://repo1.maven.org/maven2/com/sun/jersey/jersey-servlet/1.19.4/jersey-servlet-1.19.4.jar",
-              "https://repo1.maven.org/maven2/com/sun/jersey/jersey-core/1.19.4/jersey-core-1.19.4.jar",
-              "https://repo1.maven.org/maven2/com/sun/jersey/jersey-server/1.19.4/jersey-server-1.19.4.jar",
-              "https://repo1.maven.org/maven2/javax/ws/rs/javax.ws.rs-api/2.0.1/javax.ws.rs-api-2.0.1.jar"
-          )
-          foreach ($url in $libs) { $name = Split-Path $url -Leaf; Invoke-WebRequest -Uri $url -OutFile "build/WEB-INF/lib/$name" }
-
-          # 6. Compilation
+          # 4. Compilation standard
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
+          
+          # Correction encodage source
+          Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object {
+              $content = Get-Content $_.FullName -Raw
+              $content = $content -replace 'Ã©', 'e'
+              $content = $content -replace 'é', 'e'
+              [System.IO.File]::WriteAllText($_.FullName, $content, (New-Object System.Text.UTF8Encoding($false)))
+          }
+
           $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
-          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar;build/WEB-INF/lib/*" "@sources.txt"
+          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
 
-          # 7. Création du WAR
+          # 5. Création du WAR
           cd build
           jar -cvf ../dist/workflowmicropop.war .
 
@@ -80,4 +68,6 @@ jobs:
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
+          
+          Write-Host "Déploiement avec Jersey désactivé de force..."
           & $asadmin deploy --force=true --port 30442 $warFile
