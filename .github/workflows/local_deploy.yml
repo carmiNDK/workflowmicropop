@@ -18,21 +18,23 @@ jobs:
           $PROJECT_ROOT = $PWD.Path
           $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
           $TEMP_SRC = Join-Path $PROJECT_ROOT "src_compiled"
+          $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
-          # 1. Nettoyage des anciens dossiers de build
+          # 1. Nettoyage et création des dossiers de sortie
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
           if (Test-Path $TEMP_SRC) { Remove-Item -Recurse -Force $TEMP_SRC }
+          # On s'assure que le dossier DIST existe bel et bien
+          if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
           
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          # 2. Copie Web source vers build
+          # 2. Copie Web source
           $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
           Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. Traitement des accents SANS toucher au code original
-          # On crée une copie de 'src' vers 'src_compiled' en remplaçant 'é' par 'e'
-          Write-Host "Création d'une copie de travail pour corriger les accents..."
+          # 3. Shadow Copy pour les accents (Copie de travail)
+          Write-Host "Traitement des accents dans une copie temporaire..."
           Copy-Item -Path (Join-Path $PROJECT_ROOT "src") -Destination $TEMP_SRC -Recurse
           Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object {
               (Get-Content $_.FullName) -replace 'é', 'e' | Set-Content $_.FullName
@@ -55,23 +57,23 @@ jobs:
               }
           }
 
-          # 5. Classpath et Liste des sources
+          # 5. Compilation
           $jars = Get-ChildItem -Path $libPath -Filter *.jar
           $cp = ($jars.FullName -join ";")
           $sourcesFiles = Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           [System.IO.File]::WriteAllLines((Join-Path $PROJECT_ROOT "sources.txt"), $sourcesFiles)
           
-          # 6. Compilation
           $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
           $outDir = Join-Path $BUILD_DIR "WEB-INF/classes"
           java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d $outDir -cp "$cp" "@sources.txt"
 
-          # 7. Création du WAR
+          # 6. Création du WAR avec chemin ABSOLU
           if ($LASTEXITCODE -eq 0) {
-              Write-Host "Compilation réussie sur la copie de travail."
+              Write-Host "Compilation réussie. Création du WAR..."
+              $warPath = Join-Path $DIST_DIR "workflowmicropop.war"
               cd $BUILD_DIR
-              jar -cvf "../dist/workflowmicropop.war" .
-              # Nettoyage de la copie temporaire après succès
+              # On utilise le chemin complet pour éviter le FileNotFound
+              jar -cvf $warPath .
               Remove-Item -Recurse -Force $TEMP_SRC
           } else {
               Write-Error "Échec de compilation."
@@ -84,5 +86,9 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           if (Test-Path $warFile) {
+              Write-Host "Déploiement sur GlassFish..."
               & $asadmin deploy --force=true --port 30442 $warFile
+          } else {
+              Write-Error "Le fichier WAR est introuvable pour le déploiement."
+              exit 1
           }
