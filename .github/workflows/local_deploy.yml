@@ -17,11 +17,9 @@ jobs:
           cd "workflowprov1.0"
           $PROJECT_ROOT = $PWD.Path
           $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
-          $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
-          # 1. Préparation
+          # 1. Nettoyage et préparation
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
-          if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
@@ -29,7 +27,7 @@ jobs:
           $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
           Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. Dépendances
+          # 3. Dépendances (indispensables)
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
               "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
@@ -47,19 +45,22 @@ jobs:
               }
           }
 
-          # 4. Classpath
+          # 4. Classpath (Construction propre)
           $jars = Get-ChildItem -Path $libPath -Filter *.jar
           $cp = ($jars.FullName -join ";")
 
-          # 5. Compilation (PASSAGE EN UTF-8 pour supporter les accents dans les variables)
+          # 5. Compilation : On utilise l'encodage par défaut de Windows (Default) 
+          # pour correspondre à l'encodage de tes fichiers sources créés sous Windows/Eclipse.
           $sourcesFiles = Get-ChildItem -Path (Join-Path $PROJECT_ROOT "src") -Filter *.java -Recurse | ForEach-Object { $_.FullName }
-          $sourcesFiles | Out-File -FilePath (Join-Path $PROJECT_ROOT "sources.txt") -Encoding utf8
+          
+          # Utilisation de -Encoding Default pour éviter le problème "File missing" (BOM UTF8)
+          $sourcesFiles | Out-File -FilePath (Join-Path $PROJECT_ROOT "sources.txt") -Encoding Default
           
           $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
           $outDir = Join-Path $BUILD_DIR "WEB-INF/classes"
 
-          # Changement ici : -encoding UTF-8
-          java -jar $ecjJar -8 -encoding UTF-8 -d $outDir -cp "$cp" "@sources.txt"
+          # Utilisation de l'argument -warn:none pour ignorer les centaines d'avertissements et voir les erreurs réelles
+          java -jar $ecjJar -8 -encoding Default -warn:none -d $outDir -cp "$cp" "@sources.txt"
 
           # 6. Création du WAR
           if ($LASTEXITCODE -eq 0) {
@@ -67,7 +68,7 @@ jobs:
               cd $BUILD_DIR
               jar -cvf "../dist/workflowmicropop.war" .
           } else {
-              Write-Error "La compilation a échoué à cause de fautes de frappe ou d'accents dans le code Java."
+              Write-Error "Échec de compilation."
               exit 1
           }
 
