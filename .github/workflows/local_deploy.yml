@@ -2,8 +2,6 @@ name: Local Build and Deploy to GlassFish
 
 on:
   workflow_dispatch: {}
-  schedule:
-    - cron: '30 6 * * 2' 
 
 jobs:
   local-job:
@@ -13,45 +11,52 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and Absolute Bypass Fix
+      - name: Full Build with All Dependencies
         shell: powershell
         run: |
           cd "workflowprov1.0"
           
-          # 1. Nettoyage et Structure complète
+          # 1. Structure
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
-          $null = New-Item -ItemType Directory -Force -Path "build/META-INF" # <--- ON CREE LE DOSSIER ICI
+          $null = New-Item -ItemType Directory -Force -Path "build/META-INF"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
-          # 2. Ressources Web
-          Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
+          # 2. Ressources
+          Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css, *.xml -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
 
-          # 3. FORCE LE DÉSACTIVATION DU SCAN JAX-RS DANS LE MANIFEST
-          $manifestContent = "Manifest-Version: 1.0`r`n"
-          $manifestContent += "Jersey-Config-Disable-Scanning: true`r`n"
-          # Maintenant le dossier META-INF existe, donc Out-File va marcher !
-          $manifestContent | Out-File -FilePath "build/META-INF/MANIFEST.MF" -Encoding utf8 -Force
-
-          # 4. Compilation standard
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
-          
-          # Correction encodage
-          Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object {
-              $content = Get-Content $_.FullName -Raw
-              $content = $content -replace 'Ã©', 'e' -replace 'é', 'e'
-              [System.IO.File]::WriteAllText($_.FullName, $content, (New-Object System.Text.UTF8Encoding($false)))
+          # 3. TÉLÉCHARGEMENT DES LIBRAIRIES MANQUANTES (Jasper, JFreeChart, Gson)
+          Write-Host "Téléchargement des dépendances..."
+          $deps = @(
+              "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar",
+              "https://repo1.maven.org/maven2/org/jfree/jfreechart/1.5.3/jfreechart-1.5.3.jar",
+              "https://repo1.maven.org/maven2/net/sf/jasperreports/jasperreports/6.17.0/jasperreports-6.17.0.jar",
+              "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar",
+              "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar"
+          )
+          foreach ($url in $deps) { 
+              $name = Split-Path $url -Leaf
+              Invoke-WebRequest -Uri $url -OutFile "build/WEB-INF/lib/$name" 
           }
+          # On garde ecj.jar à la racine pour compiler
+          Copy-Item "build/WEB-INF/lib/ecj-3.26.0.jar" "ecj.jar"
 
+          # 4. FIX MANIFEST (Format ASCII pur pour éviter l'erreur 'invalid header')
+          [System.IO.File]::WriteAllLines("build/META-INF/MANIFEST.MF", @("Manifest-Version: 1.0", "Jersey-Config-Disable-Scanning: true"))
+
+          # 5. COMPILATION AVEC TOUT LE CLASSPATH
+          Write-Host "Compilation en cours..."
           $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
-          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
+          
+          # Le CP inclut maintenant toutes les libs téléchargées
+          $cp = ".;build/WEB-INF/lib/*"
+          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp $cp "@sources.txt"
 
-          # 5. Création du WAR (en incluant le MANIFEST.MF)
+          # 6. Création du WAR
           cd build
           jar -cvfm ../dist/workflowmicropop.war META-INF/MANIFEST.MF .
 
@@ -62,6 +67,5 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           
-          Write-Host "DEPLOIEMENT AVEC DESACTIVATION SYSTEME DU SCANNER..."
-          # Injection des propriétés directement dans la commande de déploiement
+          Write-Host "Déploiement final..."
           & $asadmin deploy --force=true --port 30442 --properties "jersey.config.server.provider.bundle.whitelist=none:jersey.config.server.provider.scanning.recursive=false" $warFile
