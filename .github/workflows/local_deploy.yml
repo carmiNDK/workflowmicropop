@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build WAR with Jersey Bypasser
+      - name: Build and Surgical XML Fix
         shell: powershell
         run: |
           cd "workflowprov1.0"
@@ -24,33 +24,33 @@ jobs:
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
-          # 2. Ressources Web
+          # 2. Ressources Web (JSP, PHP, etc.)
           Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
 
-          # 3. LE COUP DE MAÎTRE : Désactiver Jersey au niveau du déploiement
-          # On crée un fichier glassfish-web.xml s'il n'existe pas pour forcer le délégué
-          $glassfishWeb = @"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE glassfish-web-app PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 Servlet 3.0//EN" "http://glassfish.org/dtds/glassfish-web-app_3_0-1.dtd">
-          <glassfish-web-app>
-            <context-root>/workflowmicropop</context-root>
-            <property name="jersey.config.server.provider.bundle.whitelist" value="none" />
-            <property name="jersey.config.server.provider.scanning.recursive" value="false" />
-          </glassfish-web-app>
-          "@
-          $glassfishWeb | Out-File -FilePath "build/WEB-INF/glassfish-web.xml" -Encoding utf8
+          # 3. LE NETTOYAGE CHIRURGICAL DU WEB.XML (Le Secret)
+          # On supprime toute référence à Jersey pour que Glassfish arrête de scanner
+          if (Test-Path "build/WEB-INF/web.xml") {
+              Write-Host "Nettoyage des traces Jersey dans le web.xml du build..."
+              $xmlPath = "build/WEB-INF/web.xml"
+              $content = Get-Content $xmlPath -Raw
+              
+              # Cette regex magique supprime les blocs <servlet> et <servlet-mapping> liés à Jersey
+              $content = $content -replace '(?s)<servlet>\s*<servlet-name>[^<]*jersey[^<]*</servlet-name>.*?</servlet>', ''
+              $content = $content -replace '(?s)<servlet-mapping>\s*<servlet-name>[^<]*jersey[^<]*</servlet-name>.*?</servlet-mapping>', ''
+              
+              Set-Content -Path $xmlPath -Value $content
+          }
 
           # 4. Compilation standard
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
           
-          # Correction encodage source
+          # Correction encodage
           Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
-              $content = $content -replace 'Ã©', 'e'
-              $content = $content -replace 'é', 'e'
+              $content = $content -replace 'Ã©', 'e' -replace 'é', 'e'
               [System.IO.File]::WriteAllText($_.FullName, $content, (New-Object System.Text.UTF8Encoding($false)))
           }
 
@@ -69,5 +69,5 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           
-          Write-Host "Déploiement avec Jersey désactivé de force..."
+          Write-Host "Déploiement final sans aucune trace de Jersey..."
           & $asadmin deploy --force=true --port 30442 $warFile
