@@ -20,27 +20,26 @@ jobs:
           $TEMP_SRC = Join-Path $PROJECT_ROOT "src_compiled"
           $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
-          # 1. Nettoyage et création des dossiers de sortie
+          # 1. Nettoyage et création des dossiers
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
           if (Test-Path $TEMP_SRC) { Remove-Item -Recurse -Force $TEMP_SRC }
-          # On s'assure que le dossier DIST existe bel et bien
           if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
           
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          # 2. Copie Web source
+          # 2. Copie du contenu Web
           $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
           Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. Shadow Copy pour les accents (Copie de travail)
-          Write-Host "Traitement des accents dans une copie temporaire..."
+          # 3. Shadow Copy (Gestion des accents sans modifier l'original)
+          Write-Host "Traitement des accents pour la compilation..."
           Copy-Item -Path (Join-Path $PROJECT_ROOT "src") -Destination $TEMP_SRC -Recurse
           Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object {
               (Get-Content $_.FullName) -replace 'é', 'e' | Set-Content $_.FullName
           }
 
-          # 4. Téléchargement des dépendances
+          # 4. Dépendances
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
               "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
@@ -67,12 +66,11 @@ jobs:
           $outDir = Join-Path $BUILD_DIR "WEB-INF/classes"
           java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d $outDir -cp "$cp" "@sources.txt"
 
-          # 6. Création du WAR avec chemin ABSOLU
+          # 6. Création du WAR
           if ($LASTEXITCODE -eq 0) {
-              Write-Host "Compilation réussie. Création du WAR..."
+              Write-Host "Compilation OK. Génération du WAR..."
               $warPath = Join-Path $DIST_DIR "workflowmicropop.war"
               cd $BUILD_DIR
-              # On utilise le chemin complet pour éviter le FileNotFound
               jar -cvf $warPath .
               Remove-Item -Recurse -Force $TEMP_SRC
           } else {
@@ -83,12 +81,15 @@ jobs:
       - name: Deploy to Local GlassFish
         shell: powershell
         run: |
+          # Correction du chemin Java pour asadmin
+          $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
+          
           if (Test-Path $warFile) {
-              Write-Host "Déploiement sur GlassFish..."
+              Write-Host "Lancement du déploiement sur le port 30442..."
               & $asadmin deploy --force=true --port 30442 $warFile
           } else {
-              Write-Error "Le fichier WAR est introuvable pour le déploiement."
+              Write-Error "Le fichier WAR n'a pas été trouvé."
               exit 1
           }
