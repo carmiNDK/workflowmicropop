@@ -17,22 +17,23 @@ jobs:
           cd "workflowprov1.0"
           $PROJECT_ROOT = $PWD.Path
           $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
+          $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
           # 1. Préparation des dossiers
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
+          if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          # 2. Localisation du dossier Web (WebContent ou équivalent)
+          # 2. Localisation du dossier Web source
           $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
-          Write-Host "Dossier Web source : $($webRoot.FullName)"
-          
-          # Copie de TOUT le contenu existant (y compris tes JARs déjà présents)
+          Write-Host "Dossier Web source trouvé : $($webRoot.FullName)"
           Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. TÉLÉCHARGEMENT DE SECOURS (Uniquement si absent)
+          # 3. TÉLÉCHARGEMENT DES DÉPENDANCES (Inclus l'API Servlet manquante)
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
+              "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
               "gson-2.8.9.jar" = "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar"
               "jfreechart-1.5.3.jar" = "https://repo1.maven.org/maven2/org/jfree/jfreechart/1.5.3/jfreechart-1.5.3.jar"
               "jasperreports-6.17.0.jar" = "https://repo1.maven.org/maven2/net/sf/jasperreports/jasperreports/6.17.0/jasperreports-6.17.0.jar"
@@ -41,30 +42,48 @@ jobs:
           }
 
           foreach ($jarName in $essentialDeps.Keys) {
-              if (-not (Test-Path (Join-Path $libPath $jarName))) {
-                  Write-Host "Le fichier $jarName est manquant, téléchargement..."
-                  Invoke-WebRequest -Uri $essentialDeps[$jarName] -OutFile (Join-Path $libPath $jarName)
-              } else {
-                  Write-Host "$jarName est déjà présent dans le dossier lib. Ignoré."
+              $target = Join-Path $libPath $jarName
+              if (-not (Test-Path $target)) {
+                  Write-Host "Téléchargement de $jarName..."
+                  Invoke-WebRequest -Uri $essentialDeps[$jarName] -OutFile $target
               }
           }
 
-          # 4. COMPILATION
+          # 4. CONSTRUCTION DU CLASSPATH (Liste explicite des JARs pour éviter l'erreur 'incorrect classpath')
+          $jars = Get-ChildItem -Path $libPath -Filter *.jar
+          $cpList = @()
+          foreach($j in $jars) { $cpList += $j.FullName }
+          $cp = $cpList -join ";"
+          Write-Host "Classpath construit avec $($jars.Count) fichiers JAR."
+
+          # 5. COMPILATION AVEC ECJ
           $sourcesFiles = Get-ChildItem -Path (Join-Path $PROJECT_ROOT "src") -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath (Join-Path $PROJECT_ROOT "sources.txt") -Encoding ascii
           
-          # On compile en utilisant TOUT ce qui est dans le lib du build
-          $cp = ".;$libPath/*"
-          java -jar (Join-Path $libPath "ecj-3.26.0.jar") -8 -encoding ISO-8859-1 -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp $cp "@sources.txt"
+          $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
+          $outDir = Join-Path $BUILD_DIR "WEB-INF/classes"
 
-          # 5. Création du WAR
-          cd $BUILD_DIR
-          jar -cvf "../dist/workflowmicropop.war" .
+          java -jar $ecjJar -8 -encoding ISO-8859-1 -d $outDir -cp "$cp" "@sources.txt"
+
+          # 6. Création du WAR
+          if ($LASTEXITCODE -eq 0) {
+              Write-Host "Compilation réussie. Création du WAR..."
+              cd $BUILD_DIR
+              jar -cvf "../dist/workflowmicropop.war" .
+          } else {
+              Write-Error "La compilation a échoué."
+              exit 1
+          }
 
       - name: Deploy to Local GlassFish
         shell: powershell
         run: |
-          $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
-          & $asadmin deploy --force=true --port 30442 $warFile
+          # On vérifie si le fichier WAR existe avant de déployer
+          if (Test-Path $warFile) {
+              & $asadmin deploy --force=true --port 30442 $warFile
+          } else {
+              Write-Error "Fichier WAR introuvable : $warFile"
+              exit 1
+          }
