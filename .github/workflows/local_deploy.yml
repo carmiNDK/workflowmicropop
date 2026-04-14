@@ -13,15 +13,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and Absolute Bypass
+      - name: Build and Absolute Bypass Fix
         shell: powershell
         run: |
           cd "workflowprov1.0"
           
-          # 1. Nettoyage et Structure
+          # 1. Nettoyage et Structure complète
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
+          $null = New-Item -ItemType Directory -Force -Path "build/META-INF" # <--- ON CREE LE DOSSIER ICI
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
           # 2. Ressources Web
@@ -29,10 +30,10 @@ jobs:
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
 
-          # 3. FORCE LE DÉSACTIVATION DU SCAN JAX-RS DANS LE WAR
-          # On crée un fichier spécial pour Glassfish qui désactive le scanning JAX-RS
+          # 3. FORCE LE DÉSACTIVATION DU SCAN JAX-RS DANS LE MANIFEST
           $manifestContent = "Manifest-Version: 1.0`r`n"
           $manifestContent += "Jersey-Config-Disable-Scanning: true`r`n"
+          # Maintenant le dossier META-INF existe, donc Out-File va marcher !
           $manifestContent | Out-File -FilePath "build/META-INF/MANIFEST.MF" -Encoding utf8 -Force
 
           # 4. Compilation standard
@@ -50,7 +51,7 @@ jobs:
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
           java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
 
-          # 5. Création du WAR
+          # 5. Création du WAR (en incluant le MANIFEST.MF)
           cd build
           jar -cvfm ../dist/workflowmicropop.war META-INF/MANIFEST.MF .
 
@@ -62,5 +63,5 @@ jobs:
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           
           Write-Host "DEPLOIEMENT AVEC DESACTIVATION SYSTEME DU SCANNER..."
-          # On ajoute des propriétés de déploiement pour forcer l'ignorance de Jersey
+          # Injection des propriétés directement dans la commande de déploiement
           & $asadmin deploy --force=true --port 30442 --properties "jersey.config.server.provider.bundle.whitelist=none:jersey.config.server.provider.scanning.recursive=false" $warFile
