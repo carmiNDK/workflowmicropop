@@ -11,25 +11,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Full Build with All Dependencies
+      - name: Full Build with Absolute Paths
         shell: powershell
         run: |
+          # On entre dans le dossier du projet
           cd "workflowprov1.0"
+          $PROJECT_ROOT = $PWD.Path
+          $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
+          $META_INF = Join-Path $BUILD_DIR "META-INF"
+          $LIB_DIR = Join-Path $BUILD_DIR "WEB-INF/lib"
+          $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
+
+          # 1. Nettoyage et Création des dossiers de force
+          if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
+          New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
+          New-Item -ItemType Directory -Force -Path $LIB_DIR
+          New-Item -ItemType Directory -Force -Path $META_INF
+          New-Item -ItemType Directory -Force -Path $DIST_DIR
+
+          # 2. Ressources Web
+          Get-ChildItem -Path $PROJECT_ROOT -Include *.jsp, *.php, *.html, *.css, *.xml -Recurse | Copy-Item -Destination "$BUILD_DIR\" -Force -ErrorAction SilentlyContinue
           
-          # 1. Structure
-          if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
-          $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
-          $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
-          $null = New-Item -ItemType Directory -Force -Path "build/META-INF"
-          $null = New-Item -ItemType Directory -Force -Path "dist"
+          # Copie du WEB-INF source vers le build
+          $webInfSource = Get-ChildItem -Path $PROJECT_ROOT -Filter "WEB-INF" -Recurse | Select-Object -First 1
+          if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "$BUILD_DIR\WEB-INF\" -Recurse -Force }
 
-          # 2. Ressources
-          Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css, *.xml -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
-          $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
-          if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
-
-          # 3. TÉLÉCHARGEMENT DES LIBRAIRIES MANQUANTES (Jasper, JFreeChart, Gson)
-          Write-Host "Téléchargement des dépendances..."
+          # 3. Téléchargement des dépendances
+          Write-Host "Téléchargement des JARs..."
           $deps = @(
               "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar",
               "https://repo1.maven.org/maven2/org/jfree/jfreechart/1.5.3/jfreechart-1.5.3.jar",
@@ -39,26 +47,25 @@ jobs:
           )
           foreach ($url in $deps) { 
               $name = Split-Path $url -Leaf
-              Invoke-WebRequest -Uri $url -OutFile "build/WEB-INF/lib/$name" 
+              Invoke-WebRequest -Uri $url -OutFile (Join-Path $LIB_DIR $name)
           }
-          # On garde ecj.jar à la racine pour compiler
-          Copy-Item "build/WEB-INF/lib/ecj-3.26.0.jar" "ecj.jar"
+          Copy-Item (Join-Path $LIB_DIR "ecj-3.26.0.jar") (Join-Path $PROJECT_ROOT "ecj.jar")
 
-          # 4. FIX MANIFEST (Format ASCII pur pour éviter l'erreur 'invalid header')
-          [System.IO.File]::WriteAllLines("build/META-INF/MANIFEST.MF", @("Manifest-Version: 1.0", "Jersey-Config-Disable-Scanning: true"))
+          # 4. FIX MANIFEST (Utilisation du chemin absolu pour éviter l'erreur de chemin)
+          $manifestPath = Join-Path $META_INF "MANIFEST.MF"
+          [System.IO.File]::WriteAllLines($manifestPath, @("Manifest-Version: 1.0", "Jersey-Config-Disable-Scanning: true"))
 
-          # 5. COMPILATION AVEC TOUT LE CLASSPATH
-          Write-Host "Compilation en cours..."
-          $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
-          $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
+          # 5. Compilation
+          Write-Host "Compilation..."
+          $sourcesFiles = Get-ChildItem -Path (Join-Path $PROJECT_ROOT "src") -Filter *.java -Recurse | ForEach-Object { $_.FullName }
+          $sourcesFiles | Out-File -FilePath (Join-Path $PROJECT_ROOT "sources.txt") -Encoding ascii
           
-          # Le CP inclut maintenant toutes les libs téléchargées
-          $cp = ".;build/WEB-INF/lib/*"
-          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp $cp "@sources.txt"
+          $cp = ".;$LIB_DIR/*"
+          java -jar (Join-Path $PROJECT_ROOT "ecj.jar") -8 -encoding ISO-8859-1 -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp $cp "@sources.txt"
 
           # 6. Création du WAR
-          cd build
-          jar -cvfm ../dist/workflowmicropop.war META-INF/MANIFEST.MF .
+          cd $BUILD_DIR
+          jar -cvfm "$DIST_DIR/workflowmicropop.war" "$META_INF/MANIFEST.MF" .
 
       - name: Deploy to Local GlassFish
         shell: powershell
@@ -66,6 +73,4 @@ jobs:
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
-          
-          Write-Host "Déploiement final..."
           & $asadmin deploy --force=true --port 30442 --properties "jersey.config.server.provider.bundle.whitelist=none:jersey.config.server.provider.scanning.recursive=false" $warFile
