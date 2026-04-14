@@ -13,19 +13,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build WAR Structure Fix
+      - name: Build WAR with Forced Jersey Injector
         shell: powershell
         run: |
           cd "workflowprov1.0"
           
-          # 1. Nettoyage et structure
+          # 1. Préparation de la structure
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
           # 2. COLLECTE DES RESSOURCES WEB
-          Write-Host "Collecte des fichiers Web..."
+          Write-Host "Collecte des fichiers JSP et PHP..."
           Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
           
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
@@ -33,23 +33,29 @@ jobs:
               Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force
           }
 
-          # 3. COMPILATION ET NETTOYAGE DES LIBS CONFLITUELLES
+          # 3. TÉLÉCHARGEMENT DE JERSEY (Pour combler le manque de GlassFish)
+          Write-Host "Injection des bibliothèques Jersey manquantes..."
+          $jerseyUrl = "https://repo1.maven.org/maven2/com/sun/jersey/jersey-servlet/1.19.4/jersey-servlet-1.19.4.jar"
+          $jerseyCoreUrl = "https://repo1.maven.org/maven2/com/sun/jersey/jersey-core/1.19.4/jersey-core-1.19.4.jar"
+          $jerseyServerUrl = "https://repo1.maven.org/maven2/com/sun/jersey/jersey-server/1.19.4/jersey-server-1.19.4.jar"
+          
+          Invoke-WebRequest -Uri $jerseyUrl -OutFile "build/WEB-INF/lib/jersey-servlet.jar"
+          Invoke-WebRequest -Uri $jerseyCoreUrl -OutFile "build/WEB-INF/lib/jersey-core.jar"
+          Invoke-WebRequest -Uri $jerseyServerUrl -OutFile "build/WEB-INF/lib/jersey-server.jar"
+
+          # 4. COMPILATION
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
 
-          Write-Host "Compilation des Classes..."
+          Write-Host "Compilation des classes..."
           $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
-          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
+          
+          # Ajout des nouveaux jars Jersey au classpath pour la compilation si nécessaire
+          $cp = ".;servlet-api.jar;build/WEB-INF/lib/jersey-servlet.jar;build/WEB-INF/lib/jersey-core.jar;build/WEB-INF/lib/jersey-server.jar"
+          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp $cp "@sources.txt"
 
-          # --- ÉTAPE CRUCIALE POUR L'ERREUR JERSEY ---
-          # Si tu as des jars Jersey qui traînent et causent l'erreur, on les neutralise
-          Write-Host "Vérification des bibliothèques..."
-          if (Test-Path "build/WEB-INF/lib") {
-              Get-ChildItem -Path "build/WEB-INF/lib" -Filter "jersey-*" | Remove-Item -Force
-          }
-
-          # 4. Création du WAR
+          # 5. Création du WAR
           cd build
           jar -cvf ../dist/workflowmicropop.war .
 
@@ -60,5 +66,5 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           
-          Write-Host "Déploiement final sans conflit Jersey..."
+          Write-Host "Déploiement avec Jersey Injecté..."
           & $asadmin deploy --force=true --port 30442 $warFile
