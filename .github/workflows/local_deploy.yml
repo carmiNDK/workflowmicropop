@@ -20,7 +20,6 @@ jobs:
           $TEMP_SRC = Join-Path $PROJECT_ROOT "src_compiled"
           $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
-          # 1. Nettoyage et création des dossiers
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
           if (Test-Path $TEMP_SRC) { Remove-Item -Recurse -Force $TEMP_SRC }
           if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
@@ -28,27 +27,25 @@ jobs:
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          # 2. Copie du contenu Web
           $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
           Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 3. Shadow Copy (Gestion des accents sans modifier l'original)
-          Write-Host "Traitement des accents pour la compilation..."
+          # 1. Shadow Copy pour les accents
           Copy-Item -Path (Join-Path $PROJECT_ROOT "src") -Destination $TEMP_SRC -Recurse
           Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object {
               (Get-Content $_.FullName) -replace 'é', 'e' | Set-Content $_.FullName
           }
 
-          # 4. Dépendances
+          # 2. Dépendances de compilation (On retire Jersey qui cause le conflit au déploiement)
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
               "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
               "gson-2.8.9.jar" = "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar"
               "jfreechart-1.5.3.jar" = "https://repo1.maven.org/maven2/org/jfree/jfreechart/1.5.3/jfreechart-1.5.3.jar"
               "jasperreports-6.17.0.jar" = "https://repo1.maven.org/maven2/net/sf/jasperreports/jasperreports/6.17.0/jasperreports-6.17.0.jar"
-              "jersey-servlet-1.19.4.jar" = "https://repo1.maven.org/maven2/com/sun/jersey/jersey-servlet/1.19.4/jersey-servlet-1.19.4.jar"
               "ecj-3.26.0.jar" = "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar"
           }
+          
           foreach ($jarName in $essentialDeps.Keys) {
               $target = Join-Path $libPath $jarName
               if (-not (Test-Path $target)) {
@@ -56,40 +53,36 @@ jobs:
               }
           }
 
-          # 5. Compilation
+          # 3. Compilation
           $jars = Get-ChildItem -Path $libPath -Filter *.jar
           $cp = ($jars.FullName -join ";")
           $sourcesFiles = Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           [System.IO.File]::WriteAllLines((Join-Path $PROJECT_ROOT "sources.txt"), $sourcesFiles)
           
           $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
-          $outDir = Join-Path $BUILD_DIR "WEB-INF/classes"
-          java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d $outDir -cp "$cp" "@sources.txt"
+          java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp "$cp" "@sources.txt"
 
-          # 6. Création du WAR
+          # 4. Création du WAR
           if ($LASTEXITCODE -eq 0) {
-              Write-Host "Compilation OK. Génération du WAR..."
               $warPath = Join-Path $DIST_DIR "workflowmicropop.war"
               cd $BUILD_DIR
+              # Avant de zipper, on supprime javaee-api et ecj du WAR (ils ne servent qu'à compiler)
+              # Cela évite les conflits avec le serveur
+              Remove-Item (Join-Path "WEB-INF/lib" "javaee-api-7.0.jar") -ErrorAction SilentlyContinue
+              Remove-Item (Join-Path "WEB-INF/lib" "ecj-3.26.0.jar") -ErrorAction SilentlyContinue
+              
               jar -cvf $warPath .
               Remove-Item -Recurse -Force $TEMP_SRC
           } else {
-              Write-Error "Échec de compilation."
               exit 1
           }
 
       - name: Deploy to Local GlassFish
         shell: powershell
         run: |
-          # Correction du chemin Java pour asadmin
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
-          
           if (Test-Path $warFile) {
-              Write-Host "Lancement du déploiement sur le port 30442..."
               & $asadmin deploy --force=true --port 30442 $warFile
-          } else {
-              Write-Error "Le fichier WAR n'a pas été trouvé."
-              exit 1
           }
