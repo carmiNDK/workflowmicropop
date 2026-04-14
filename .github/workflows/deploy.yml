@@ -1,7 +1,9 @@
 name: Build and Deploy JavaEE WAR to EC2
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: {}  # Permet le lancement manuel
+  schedule:
+    - cron: '58 0 * * 2'  # Chaque Mardi à 00h05 UTC
 
 jobs:
   build-and-deploy:
@@ -29,10 +31,9 @@ jobs:
           curl -L https://repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar -o annotation-api.jar
 
           # 2. TÉLÉCHARGEMENT DU COMPILATEUR ECLIPSE (ECJ)
-          # C'est ce qui va sauver le projet sans modifier le code
           curl -L https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar -o ecj.jar
 
-          # 3. Nettoyage rapide des caractères (pour éviter les conflits d'encodage)
+          # 3. Nettoyage rapide des caractères
           find src -name "*.java" -exec sed -i 's/Ã©/e/g' {} +
           find src -name "*.java" -exec sed -i 's/é/e/g' {} +
 
@@ -40,7 +41,6 @@ jobs:
           CLASSPATH=$(find . -name "*.jar" | tr '\n' ':')
 
           # 5. COMPILATION VIA ECLIPSE COMPILER
-          # On utilise java -jar ecj.jar au lieu de javac
           find src -name "*.java" > sources.txt
           java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$CLASSPATH" @sources.txt
 
