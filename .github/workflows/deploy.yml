@@ -3,7 +3,7 @@ name: Build and Deploy JavaEE WAR to EC2
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '55 23 * * 1' # Lundi à 00:15 UTC (01:15 Kinshasa)
+    - cron: '07 00 * * 2'  # Tous les jours à 01:15 Kinshasa
 
 jobs:
   build-and-deploy:
@@ -19,48 +19,45 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      # ÉTAPE 1 : COMPILATION AVEC LIBRAIRIES EXTERNES
       - name: Build WAR
         run: |
           cd "workflowprov1.0"
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
           
-          # TÉLÉCHARGEMENT DES LIBS SERVLET (Crucial pour JavaEE)
-          # Cela évite les erreurs "package javax.servlet does not exist"
+          # 1. Téléchargement des dépendances JavaEE manquantes sur GitHub
           curl -L https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar -o servlet-api.jar
           curl -L https://repo1.maven.org/maven2/javax/servlet/jsp/javax.servlet.jsp-api/2.3.1/javax.servlet.jsp-api-2.3.1.jar -o jsp-api.jar
+          curl -L https://repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar -o annotation-api.jar
 
-          # On cherche les sources
+          # 2. Construction ultra-robuste du Classpath
+          # On cherche absolument TOUS les .jar du dossier workflowprov1.0
+          CLASSPATH=$(find . -name "*.jar" | tr '\n' ':')
+          echo "DEBUG: Classpath complet utilisé : $CLASSPATH"
+
+          # 3. Compilation avec encodage ISO et Classpath total
           find src -name "*.java" > sources.txt
-          
-          # On construit le classpath (Libs projet + Libs JavaEE téléchargées)
-          LIBS=$(find . -name "*.jar" | tr '\n' ':')
-          
-          # COMPILATION : Forçage encodage + Classpath complet
-          javac -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$LIBS" @sources.txt
-          
-          # Assemblage du dossier build
+          javac -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$CLASSPATH" @sources.txt
+
+          # 4. Assemblage du WAR
           cp -r WebContent/* build/
           cd build && jar -cvf ../dist/workflowmicropop.war .
-          echo "Compilation réussie !"
+          echo "WAR généré avec succès."
 
-      # ÉTAPE 2 : PRÉPARATION DU ZIP
       - name: Prepare Package
         run: |
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
           
-          ROOT_DIR="workflowprov1.0"
-          cp "$ROOT_DIR/dist/workflowmicropop.war" ./out_package/
+          # On pioche le WAR généré
+          cp "workflowprov1.0/dist/workflowmicropop.war" ./out_package/
           
-          # Nettoyage des scripts (Windows vers Linux)
-          cat "$ROOT_DIR/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
-          cat "$ROOT_DIR/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
+          # Nettoyage des scripts CodeDeploy
+          cat "workflowprov1.0/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
+          cat "workflowprov1.0/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
           
           chmod +x ./out_package/deploy.sh
 
-      # ÉTAPE 3 : ENVOI SUR AWS
       - name: Create Zip and Deploy
         run: |
           cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
