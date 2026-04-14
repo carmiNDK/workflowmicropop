@@ -20,6 +20,7 @@ jobs:
           $TEMP_SRC = Join-Path $PROJECT_ROOT "src_compiled"
           $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
           
+          # 1. Nettoyage
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
           if (Test-Path $TEMP_SRC) { Remove-Item -Recurse -Force $TEMP_SRC }
           if (-not (Test-Path $DIST_DIR)) { New-Item -ItemType Directory -Path $DIST_DIR }
@@ -27,16 +28,19 @@ jobs:
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
 
-          $webRoot = Get-ChildItem -Path $PROJECT_ROOT -Directory -Recurse | Where-Object { Test-Path (Join-Path $_.FullName "WEB-INF") } | Select-Object -First 1
-          Copy-Item -Path "$($webRoot.FullName)\*" -Destination "$BUILD_DIR\" -Recurse -Force
+          # 2. Copie du CONTENU de WebContent (C'est ici que ça se joue)
+          $webContentPath = Join-Path $PROJECT_ROOT "WebContent"
+          Write-Host "Copie du contenu de $webContentPath vers la racine du build..."
+          # On utilise \* pour copier les fichiers/dossiers à l'intérieur, pas le dossier lui-même
+          Copy-Item -Path "$webContentPath\*" -Destination "$BUILD_DIR\" -Recurse -Force
 
-          # 1. Shadow Copy pour les accents
+          # 3. Shadow Copy pour les accents (Copie de travail)
           Copy-Item -Path (Join-Path $PROJECT_ROOT "src") -Destination $TEMP_SRC -Recurse
           Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object {
               (Get-Content $_.FullName) -replace 'é', 'e' | Set-Content $_.FullName
           }
 
-          # 2. Dépendances de compilation (On retire Jersey qui cause le conflit au déploiement)
+          # 4. Dépendances de compilation (On exclut Jersey et JavaEE du WAR final)
           $libPath = Join-Path $BUILD_DIR "WEB-INF/lib"
           $essentialDeps = @{
               "javaee-api-7.0.jar" = "https://repo1.maven.org/maven2/javax/javaee-api/7.0/javaee-api-7.0.jar"
@@ -45,34 +49,29 @@ jobs:
               "jasperreports-6.17.0.jar" = "https://repo1.maven.org/maven2/net/sf/jasperreports/jasperreports/6.17.0/jasperreports-6.17.0.jar"
               "ecj-3.26.0.jar" = "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar"
           }
-          
           foreach ($jarName in $essentialDeps.Keys) {
-              $target = Join-Path $libPath $jarName
-              if (-not (Test-Path $target)) {
-                  Invoke-WebRequest -Uri $essentialDeps[$jarName] -OutFile $target
-              }
+              Invoke-WebRequest -Uri $essentialDeps[$jarName] -OutFile (Join-Path $libPath $jarName)
           }
 
-          # 3. Compilation
+          # 5. Compilation
           $jars = Get-ChildItem -Path $libPath -Filter *.jar
           $cp = ($jars.FullName -join ";")
           $sourcesFiles = Get-ChildItem -Path $TEMP_SRC -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           [System.IO.File]::WriteAllLines((Join-Path $PROJECT_ROOT "sources.txt"), $sourcesFiles)
           
-          $ecjJar = Join-Path $libPath "ecj-3.26.0.jar"
-          java -jar $ecjJar -8 -encoding UTF-8 -warn:none -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp "$cp" "@sources.txt"
+          java -jar (Join-Path $libPath "ecj-3.26.0.jar") -8 -encoding UTF-8 -warn:none -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp "$cp" "@sources.txt"
 
-          # 4. Création du WAR
+          # 6. Création du WAR
           if ($LASTEXITCODE -eq 0) {
               $warPath = Join-Path $DIST_DIR "workflowmicropop.war"
-              cd $BUILD_DIR
-              # Avant de zipper, on supprime javaee-api et ecj du WAR (ils ne servent qu'à compiler)
-              # Cela évite les conflits avec le serveur
-              Remove-Item (Join-Path "WEB-INF/lib" "javaee-api-7.0.jar") -ErrorAction SilentlyContinue
-              Remove-Item (Join-Path "WEB-INF/lib" "ecj-3.26.0.jar") -ErrorAction SilentlyContinue
               
+              # Nettoyage avant empaquetage : on enlève les libs fournies par GlassFish
+              Remove-Item (Join-Path $libPath "javaee-api-7.0.jar") -Force
+              Remove-Item (Join-Path $libPath "ecj-3.26.0.jar") -Force
+              
+              cd $BUILD_DIR
               jar -cvf $warPath .
-              Remove-Item -Recurse -Force $TEMP_SRC
+              Write-Host "WAR généré avec succès dans $warPath"
           } else {
               exit 1
           }
@@ -84,5 +83,6 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           if (Test-Path $warFile) {
-              & $asadmin deploy --force=true --port 30442 $warFile
+              # On force le context root pour être sûr
+              & $asadmin deploy --force=true --contextroot "workflowmicropop" --port 30442 $warFile
           }
