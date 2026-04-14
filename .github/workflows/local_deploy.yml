@@ -13,14 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build WAR with Jersey Hard-Fix
+      - name: Build WAR with Dynamic Jersey Fix
         shell: powershell
         run: |
           cd "workflowprov1.0"
           
-          # 1. Structure propre
+          # 1. Préparation structure
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
-          $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes/com/fix"
+          $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
@@ -29,35 +29,32 @@ jobs:
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
 
-          # 3. CRÉATION DE LA CLASSE DE SECOURS (Package précis)
-          $ghostClass = @"
-          package com.fix;
-          import javax.ws.rs.Path;
-          import javax.ws.rs.GET;
-          import javax.ws.rs.Produces;
-          @Path("/fix")
-          public class GlassfishFix {
-              @GET
-              @Produces("text/plain")
-              public String check() { return "Jersey is Fixed"; }
-          }
-          "@
-          $ghostClass | Out-File -FilePath "src/GlassfishFix.java" -Encoding utf8
-
-          # 4. INJECTION DYNAMIQUE DANS LE WEB.XML DU BUILD
-          # On force Jersey à scanner le package 'com.fix' pour qu'il trouve au moins une classe
+          # 3. CHIRURGIE DYNAMIQUE : On lit le package attendu par Jersey dans ton web.xml
+          $targetPackage = "com.fix" # Par défaut
           if (Test-Path "build/WEB-INF/web.xml") {
-              Write-Host "Injection du package de secours dans le web.xml temporaire..."
-              $xmlPath = "build/WEB-INF/web.xml"
-              $content = Get-Content $xmlPath -Raw
-              if ($content -match "com.sun.jersey.config.property.packages") {
-                  # On ajoute notre package à la liste existante
-                  $content = $content -replace '(<param-value>)([^<]*)', '$1com.fix;$2'
-                  Set-Content -Path $xmlPath -Value $content
+              $xmlContent = Get-Content "build/WEB-INF/web.xml" -Raw
+              if ($xmlContent -match '<param-name>com.sun.jersey.config.property.packages</param-name>\s*<param-value>([^<]+)</param-value>') {
+                  $targetPackage = $matches[1].Split(';')[0].Trim()
+                  Write-Host "Package Jersey détecté : $targetPackage"
               }
           }
 
-          # 5. Téléchargement des dépendances
+          # 4. CRÉATION DE LA CLASSE DANS LE BON PACKAGE
+          $packagePath = $targetPackage.Replace('.', '/')
+          $null = New-Item -ItemType Directory -Force -Path "src/$packagePath"
+          $ghostClass = @"
+          package $targetPackage;
+          import javax.ws.rs.Path;
+          import javax.ws.rs.GET;
+          @Path("/healthcheck")
+          public class GlassfishFix {
+              @GET
+              public String check() { return "Jersey Fixed"; }
+          }
+          "@
+          $ghostClass | Out-File -FilePath "src/$packagePath/GlassfishFix.java" -Encoding utf8
+
+          # 5. Injection des JARs Jersey & API
           $libs = @(
               "https://repo1.maven.org/maven2/com/sun/jersey/jersey-servlet/1.19.4/jersey-servlet-1.19.4.jar",
               "https://repo1.maven.org/maven2/com/sun/jersey/jersey-core/1.19.4/jersey-core-1.19.4.jar",
@@ -83,5 +80,4 @@ jobs:
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
-          Write-Host "Tentative de déploiement final..."
           & $asadmin deploy --force=true --port 30442 $warFile
