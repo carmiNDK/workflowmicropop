@@ -13,35 +13,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and Surgical XML Fix
+      - name: Build and Absolute Bypass
         shell: powershell
         run: |
           cd "workflowprov1.0"
           
-          # 1. Structure
+          # 1. Nettoyage et Structure
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
-          # 2. Ressources Web (JSP, PHP, etc.)
+          # 2. Ressources Web
           Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force }
 
-          # 3. LE NETTOYAGE CHIRURGICAL DU WEB.XML (Le Secret)
-          # On supprime toute référence à Jersey pour que Glassfish arrête de scanner
-          if (Test-Path "build/WEB-INF/web.xml") {
-              Write-Host "Nettoyage des traces Jersey dans le web.xml du build..."
-              $xmlPath = "build/WEB-INF/web.xml"
-              $content = Get-Content $xmlPath -Raw
-              
-              # Cette regex magique supprime les blocs <servlet> et <servlet-mapping> liés à Jersey
-              $content = $content -replace '(?s)<servlet>\s*<servlet-name>[^<]*jersey[^<]*</servlet-name>.*?</servlet>', ''
-              $content = $content -replace '(?s)<servlet-mapping>\s*<servlet-name>[^<]*jersey[^<]*</servlet-name>.*?</servlet-mapping>', ''
-              
-              Set-Content -Path $xmlPath -Value $content
-          }
+          # 3. FORCE LE DÉSACTIVATION DU SCAN JAX-RS DANS LE WAR
+          # On crée un fichier spécial pour Glassfish qui désactive le scanning JAX-RS
+          $manifestContent = "Manifest-Version: 1.0`r`n"
+          $manifestContent += "Jersey-Config-Disable-Scanning: true`r`n"
+          $manifestContent | Out-File -FilePath "build/META-INF/MANIFEST.MF" -Encoding utf8 -Force
 
           # 4. Compilation standard
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
@@ -60,7 +52,7 @@ jobs:
 
           # 5. Création du WAR
           cd build
-          jar -cvf ../dist/workflowmicropop.war .
+          jar -cvfm ../dist/workflowmicropop.war META-INF/MANIFEST.MF .
 
       - name: Deploy to Local GlassFish
         shell: powershell
@@ -69,5 +61,6 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           
-          Write-Host "Déploiement final sans aucune trace de Jersey..."
-          & $asadmin deploy --force=true --port 30442 $warFile
+          Write-Host "DEPLOIEMENT AVEC DESACTIVATION SYSTEME DU SCANNER..."
+          # On ajoute des propriétés de déploiement pour forcer l'ignorance de Jersey
+          & $asadmin deploy --force=true --port 30442 --properties "jersey.config.server.provider.bundle.whitelist=none:jersey.config.server.provider.scanning.recursive=false" $warFile
