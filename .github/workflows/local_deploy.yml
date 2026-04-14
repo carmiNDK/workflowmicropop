@@ -21,36 +21,35 @@ jobs:
           # 1. Nettoyage et structure
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
+          $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/lib"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
           # 2. COLLECTE DES RESSOURCES WEB
           Write-Host "Collecte des fichiers Web..."
           Get-ChildItem -Path . -Include *.jsp, *.php, *.html, *.css -Recurse | Copy-Item -Destination "build\" -Force -ErrorAction SilentlyContinue
           
-          # Copie du dossier WEB-INF original (très important pour le web.xml)
           $webInfSource = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) {
               Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force
           }
 
-          # 3. COMPILATION AVEC STRUCTURE DE PACKAGE
-          # On télécharge les libs
+          # 3. COMPILATION ET NETTOYAGE DES LIBS CONFLITUELLES
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
 
-          # On compile TOUT le dossier src vers WEB-INF/classes
-          Write-Host "Compilation des Servlets et Classes..."
+          Write-Host "Compilation des Classes..."
           $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
-          
-          # L'option -d build/WEB-INF/classes va recréer automatiquement tes dossiers com/nom/projet/
           java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
 
-          # 4. Vérification : Est-ce qu'on a bien des classes ?
-          Write-Host "Vérification des classes compilées :"
-          Get-ChildItem -Path "build\WEB-INF\classes" -Recurse -Filter *.class
+          # --- ÉTAPE CRUCIALE POUR L'ERREUR JERSEY ---
+          # Si tu as des jars Jersey qui traînent et causent l'erreur, on les neutralise
+          Write-Host "Vérification des bibliothèques..."
+          if (Test-Path "build/WEB-INF/lib") {
+              Get-ChildItem -Path "build/WEB-INF/lib" -Filter "jersey-*" | Remove-Item -Force
+          }
 
-          # 5. Création du WAR
+          # 4. Création du WAR
           cd build
           jar -cvf ../dist/workflowmicropop.war .
 
@@ -61,5 +60,5 @@ jobs:
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           
-          Write-Host "Déploiement final..."
+          Write-Host "Déploiement final sans conflit Jersey..."
           & $asadmin deploy --force=true --port 30442 $warFile
