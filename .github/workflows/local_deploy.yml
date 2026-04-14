@@ -11,33 +11,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Full Build with Absolute Paths
+      - name: Surgical Build - Anti-Jersey
         shell: powershell
         run: |
-          # On entre dans le dossier du projet
           cd "workflowprov1.0"
           $PROJECT_ROOT = $PWD.Path
           $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
-          $META_INF = Join-Path $BUILD_DIR "META-INF"
-          $LIB_DIR = Join-Path $BUILD_DIR "WEB-INF/lib"
-          $DIST_DIR = Join-Path $PROJECT_ROOT "dist"
-
-          # 1. Nettoyage et Création des dossiers de force
+          
+          # 1. Nettoyage et Création
           if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
           New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/classes")
-          New-Item -ItemType Directory -Force -Path $LIB_DIR
-          New-Item -ItemType Directory -Force -Path $META_INF
-          New-Item -ItemType Directory -Force -Path $DIST_DIR
+          New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "WEB-INF/lib")
+          New-Item -ItemType Directory -Force -Path (Join-Path $BUILD_DIR "META-INF")
+          New-Item -ItemType Directory -Force -Path (Join-Path $PROJECT_ROOT "dist")
 
-          # 2. Ressources Web
+          # 2. Copie des fichiers
           Get-ChildItem -Path $PROJECT_ROOT -Include *.jsp, *.php, *.html, *.css, *.xml -Recurse | Copy-Item -Destination "$BUILD_DIR\" -Force -ErrorAction SilentlyContinue
-          
-          # Copie du WEB-INF source vers le build
           $webInfSource = Get-ChildItem -Path $PROJECT_ROOT -Filter "WEB-INF" -Recurse | Select-Object -First 1
           if ($webInfSource) { Copy-Item -Path "$($webInfSource.FullName)\*" -Destination "$BUILD_DIR\WEB-INF\" -Recurse -Force }
 
-          # 3. Téléchargement des dépendances
-          Write-Host "Téléchargement des JARs..."
+          # 3. CHIRURGIE DU WEB.XML : On arrache Jersey
+          $webXmlPath = Join-Path $BUILD_DIR "WEB-INF/web.xml"
+          if (Test-Path $webXmlPath) {
+              Write-Host "Suppression chirurgicale de Jersey dans le web.xml..."
+              $content = Get-Content $webXmlPath -Raw
+              # On supprime les blocs <servlet> et <servlet-mapping> qui contiennent 'jersey' ou 'JAX-RS'
+              $content = $content -replace '(?s)<servlet>.*?jersey.*?/servlet>', ''
+              $content = $content -replace '(?s)<servlet-mapping>.*?jersey.*?/servlet-mapping>', ''
+              $content = $content -replace '(?s)<servlet>.*?JAX-RS.*?/servlet>', ''
+              $content = $content -replace '(?s)<servlet-mapping>.*?JAX-RS.*?/servlet-mapping>', ''
+              [System.IO.File]::WriteAllText($webXmlPath, $content)
+          }
+
+          # 4. Téléchargement des dépendances pour la compilation
           $deps = @(
               "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar",
               "https://repo1.maven.org/maven2/org/jfree/jfreechart/1.5.3/jfreechart-1.5.3.jar",
@@ -47,25 +53,18 @@ jobs:
           )
           foreach ($url in $deps) { 
               $name = Split-Path $url -Leaf
-              Invoke-WebRequest -Uri $url -OutFile (Join-Path $LIB_DIR $name)
+              Invoke-WebRequest -Uri $url -OutFile (Join-Path $BUILD_DIR "WEB-INF/lib/$name")
           }
-          Copy-Item (Join-Path $LIB_DIR "ecj-3.26.0.jar") (Join-Path $PROJECT_ROOT "ecj.jar")
-
-          # 4. FIX MANIFEST (Utilisation du chemin absolu pour éviter l'erreur de chemin)
-          $manifestPath = Join-Path $META_INF "MANIFEST.MF"
-          [System.IO.File]::WriteAllLines($manifestPath, @("Manifest-Version: 1.0", "Jersey-Config-Disable-Scanning: true"))
 
           # 5. Compilation
-          Write-Host "Compilation..."
           $sourcesFiles = Get-ChildItem -Path (Join-Path $PROJECT_ROOT "src") -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath (Join-Path $PROJECT_ROOT "sources.txt") -Encoding ascii
-          
-          $cp = ".;$LIB_DIR/*"
-          java -jar (Join-Path $PROJECT_ROOT "ecj.jar") -8 -encoding ISO-8859-1 -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp $cp "@sources.txt"
+          $cp = ".;$BUILD_DIR/WEB-INF/lib/*"
+          java -jar (Join-Path $BUILD_DIR "WEB-INF/lib/ecj-3.26.0.jar") -8 -encoding ISO-8859-1 -d (Join-Path $BUILD_DIR "WEB-INF/classes") -cp $cp "@sources.txt"
 
           # 6. Création du WAR
           cd $BUILD_DIR
-          jar -cvfm "$DIST_DIR/workflowmicropop.war" "$META_INF/MANIFEST.MF" .
+          jar -cvf "../dist/workflowmicropop.war" .
 
       - name: Deploy to Local GlassFish
         shell: powershell
@@ -73,4 +72,5 @@ jobs:
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
-          & $asadmin deploy --force=true --port 30442 --properties "jersey.config.server.provider.bundle.whitelist=none:jersey.config.server.provider.scanning.recursive=false" $warFile
+          # On déploie sans les propriétés qui faisaient peut-être bugger asadmin
+          & $asadmin deploy --force=true --port 30442 $warFile
