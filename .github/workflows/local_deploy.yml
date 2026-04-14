@@ -1,44 +1,43 @@
 name: Local Build and Deploy to GlassFish
 
 on:
-  workflow_dispatch: {} # Lancement manuel
+  workflow_dispatch: {}
   schedule:
-    - cron: '30 4 * * 2'  # <--- CHAQUE MARDI A 04h30 UTC
+    - cron: '30 4 * * 2'
 
 jobs:
   local-job:
-    runs-on: self-hosted # Utilise ton Runner local (MON-PC-DEV)
+    runs-on: self-hosted
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build WAR with Web Resources (Windows)
+      - name: Build WAR with Deep Search Resources
         shell: powershell
         run: |
-          # 1. Accès au dossier du projet
           cd "workflowprov1.0"
           
-          # 2. Nettoyage complet
+          # 1. Nettoyage
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
-          # 3. COLLECTE DES RESSOURCES WEB (Crucial pour l'affichage)
-          Write-Host "Collecte des fichiers JSP, PHP et configuration..."
-          # On copie les fichiers de vue à la racine du build
-          Copy-Item -Path "*.jsp", "*.php" -Destination "build\" -ErrorAction SilentlyContinue
+          # 2. COLLECTE INTELLIGENTE DES RESSOURCES
+          # On cherche partout les fichiers .jsp, .php et le web.xml pour les mettre au bon endroit
+          Write-Host "Recherche et copie des fichiers Web..."
+          Get-ChildItem -Path . -Include *.jsp, *.php -Recurse | Copy-Item -Destination "build\" -Force
           
-          # On copie le dossier WEB-INF (contenant web.xml) s'il existe
-          if (Test-Path "WEB-INF") {
-              Copy-Item -Path "WEB-INF\*" -Destination "build\WEB-INF\" -Recurse -Force
+          # On cherche le dossier WEB-INF (souvent dans WebContent ou web)
+          $webInfPath = Get-ChildItem -Path . -Filter "WEB-INF" -Recurse | Select-Object -First 1
+          if ($webInfPath) {
+              Copy-Item -Path "$($webInfPath.FullName)\*" -Destination "build\WEB-INF\" -Recurse -Force
           }
 
-          # 4. Téléchargement des outils de compilation
+          # 3. Outils et Encodage
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
 
-          # 5. Correction de l'encodage du code source (Ã© -> e)
           Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
               $content = $content -replace 'Ã©', 'e'
@@ -46,31 +45,26 @@ jobs:
               [System.IO.File]::WriteAllText($_.FullName, $content, (New-Object System.Text.UTF8Encoding($false)))
           }
 
-          # 6. Compilation des Servlets
-          Write-Host "Compilation des classes..."
+          # 4. Compilation
+          Write-Host "Compilation..."
           $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
-          
-          # Utilisation de "@sources.txt" avec guillemets pour PowerShell
           java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
 
-          # 7. Création du WAR final
-          Write-Host "Création du package WAR..."
+          # 5. Création et VERIFICATION du WAR
+          Write-Host "Création du WAR..."
           cd build
           jar -cvf ../dist/workflowmicropop.war .
+          Write-Host "CONTENU DU WAR GENERE :"
+          jar -tf ../dist/workflowmicropop.war
 
       - name: Deploy to Local GlassFish
         shell: powershell
         run: |
-          # --- CONFIGURATION ENVIRONNEMENT ---
-          # On force l'utilisation du JDK 1.8 pour éviter l'erreur "version 0"
           $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
-          
-          # Chemins basés sur tes captures d'écran
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           $port = "30442"
           
-          Write-Host "Déploiement sur GlassFish (Port $port)..."
-          # Opérateur & pour gérer les espaces dans le chemin
+          Write-Host "Déploiement sur GlassFish..."
           & $asadmin deploy --force=true --port $port $warFile
