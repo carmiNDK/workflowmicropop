@@ -3,7 +3,7 @@ name: Build and Deploy JavaEE WAR to EC2
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '13 0 * * 2' # 01:30 à Kinshasa
+    - cron: '20 0 * * 2'
 
 jobs:
   build-and-deploy:
@@ -25,21 +25,23 @@ jobs:
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
           
-          # 1. Téléchargement forcé des libs JavaEE de base
+          # 1. Téléchargement des librairies JavaEE
           curl -L https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar -o servlet-api.jar
           curl -L https://repo1.maven.org/maven2/javax/servlet/jsp/javax.servlet.jsp-api/2.3.1/javax.servlet.jsp-api-2.3.1.jar -o jsp-api.jar
           curl -L https://repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar -o annotation-api.jar
 
-          # 2. Construction du Classpath (Projet + Libs téléchargées)
-          # On cherche tous les .jar récursivement
+          # 2. NETTOYAGE DES CARACTÈRES SPÉCIAUX (Fix pour Controleur.java)
+          # On s'assure que le fichier est lu correctement en UTF-8
+          find src -name "*.java" -exec sed -i 's/Ã©/é/g' {} +
+
+          # 3. Construction du Classpath
           CLASSPATH=$(find . -name "*.jar" | tr '\n' ':')
 
-          # 3. Compilation avec paramètres de tolérance
-          # -Xlint:none supprime les warnings qui bloquent parfois le build
+          # 4. COMPILATION EN FORÇANT L'UTF-8
           find src -name "*.java" > sources.txt
-          javac -encoding ISO-8859-1 -Xlint:none -d build/WEB-INF/classes -cp "$CLASSPATH" @sources.txt
+          javac -encoding UTF-8 -Xlint:none -d build/WEB-INF/classes -cp "$CLASSPATH" @sources.txt
 
-          # 4. Assemblage manuel pour être sûr de ne rien rater
+          # 5. Assemblage du WAR
           cp -r WebContent/* build/
           cd build && jar -cvf ../dist/workflowmicropop.war .
           
@@ -47,27 +49,19 @@ jobs:
         run: |
           rm -rf ./out_package deploydoc.zip
           mkdir -p ./out_package
-          
-          # Copie sécurisée du WAR
           cp "workflowprov1.0/dist/workflowmicropop.war" ./out_package/
-          
-          # Correction des scripts CodeDeploy (Chemins vus sur ton image)
           cat "workflowprov1.0/deploydoc/deploy.sh" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/deploy.sh
           cat "workflowprov1.0/deploydoc/appspec.yml" | tr -d '\r' | iconv -t UTF-8//IGNORE > ./out_package/appspec.yml
-          
           chmod +x ./out_package/deploy.sh
 
       - name: AWS Deploy
         run: |
           cd ./out_package && zip ../deploydoc.zip appspec.yml deploy.sh workflowmicropop.war
           cd ..
-          
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }}
           export AWS_DEFAULT_REGION=eu-west-3
-          
           aws s3 cp deploydoc.zip s3://micropopdev/deploydoc.zip
-          
           aws deploy create-deployment \
             --application-name micropop-app \
             --deployment-group-name micropop-dg \
