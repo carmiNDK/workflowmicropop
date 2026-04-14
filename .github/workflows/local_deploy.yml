@@ -3,7 +3,7 @@ name: Local Build and Deploy to GlassFish
 on:
   workflow_dispatch: {} # Permet de lancer manuellement depuis GitHub
   schedule:
-    - cron: '5 0 * * 3' # Déclenchement automatique chaque mercredi à 00h05
+    - cron: '30 15 * * 2' # Déclenchement automatique chaque mardi à 15h30
 
 jobs:
   local-job:
