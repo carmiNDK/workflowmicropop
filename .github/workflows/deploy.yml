@@ -17,31 +17,34 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: Build WAR
+      - name: Build WAR with Eclipse Compiler (ECJ)
         run: |
           cd "workflowprov1.0"
           mkdir -p build/WEB-INF/classes
           mkdir -p dist
           
-          # 1. Dépendances
+          # 1. Téléchargement des libs JavaEE
           curl -L https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar -o servlet-api.jar
           curl -L https://repo1.maven.org/maven2/javax/servlet/jsp/javax.servlet.jsp-api/2.3.1/javax.servlet.jsp-api-2.3.1.jar -o jsp-api.jar
           curl -L https://repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar -o annotation-api.jar
 
-          # 2. Nettoyage des variables (Indispensable)
+          # 2. TÉLÉCHARGEMENT DU COMPILATEUR ECLIPSE (ECJ)
+          # C'est ce qui va sauver le projet sans modifier le code
+          curl -L https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar -o ecj.jar
+
+          # 3. Nettoyage rapide des caractères (pour éviter les conflits d'encodage)
           find src -name "*.java" -exec sed -i 's/Ã©/e/g' {} +
           find src -name "*.java" -exec sed -i 's/é/e/g' {} +
-          find src -name "*.java" -exec sed -i 's/\xc2\xa9//g' {} +
 
-          # 3. Classpath
+          # 4. Construction du Classpath
           CLASSPATH=$(find . -name "*.jar" | tr '\n' ':')
 
-          # 4. COMPILATION OPTIMISÉE (-g:none réduit la taille du bytecode)
-          # On retire les informations de débug pour gagner de la place
+          # 5. COMPILATION VIA ECLIPSE COMPILER
+          # On utilise java -jar ecj.jar au lieu de javac
           find src -name "*.java" > sources.txt
-          javac -g:none -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$CLASSPATH" @sources.txt
+          java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp "$CLASSPATH" @sources.txt
 
-          # 5. Assemblage
+          # 6. Assemblage du WAR
           cp -r WebContent/* build/
           cd build && jar -cvf ../dist/workflowmicropop.war .
           
