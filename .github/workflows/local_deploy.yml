@@ -1,32 +1,36 @@
 name: Local Build and Deploy to GlassFish
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: {} # Lancement manuel
   schedule:
-    - cron: '30 4 * * 2'
+    - cron: '30 4 * * 2'  # Automatique chaque Mardi à 04h30 UTC
 
 jobs:
   local-job:
-    runs-on: self-hosted
+    runs-on: self-hosted # Cible ton PC local
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build with ECJ (Windows)
+      - name: Build with ECJ (Windows PowerShell)
         shell: powershell
         run: |
+          # 1. Accès au dossier du projet
           cd "workflowprov1.0"
           
+          # 2. Nettoyage des anciens fichiers de build
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           $null = New-Item -ItemType Directory -Force -Path "build/WEB-INF/classes"
           $null = New-Item -ItemType Directory -Force -Path "dist"
 
-          Write-Host "Récupération des outils..."
+          # 3. Téléchargement des outils nécessaires
+          Write-Host "Téléchargement du compilateur et des API..."
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.26.0/ecj-3.26.0.jar" -OutFile "ecj.jar"
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" -OutFile "servlet-api.jar"
 
-          Write-Host "Correction de l'encodage..."
+          # 4. Correction de l'encodage (Ã© et é -> e)
+          Write-Host "Correction du code source..."
           Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object {
               $content = Get-Content $_.FullName -Raw
               $content = $content -replace 'Ã©', 'e'
@@ -34,23 +38,30 @@ jobs:
               [System.IO.File]::WriteAllText($_.FullName, $content, (New-Object System.Text.UTF8Encoding($false)))
           }
 
-          Write-Host "Compilation..."
+          # 5. Compilation avec ECJ
+          Write-Host "Compilation en cours..."
           $sourcesFiles = Get-ChildItem -Path src -Filter *.java -Recurse | ForEach-Object { $_.FullName }
           $sourcesFiles | Out-File -FilePath sources.txt -Encoding ascii
           
-          # LA CORRECTION EST ICI : On met des guillemets pour que PowerShell ne vole pas le @
+          # Utilisation des guillemets pour "@sources.txt" pour éviter l'erreur de splatting PowerShell
           java -jar ecj.jar -8 -encoding ISO-8859-1 -d build/WEB-INF/classes -cp ".;servlet-api.jar" "@sources.txt"
 
-          Write-Host "Assemblage du WAR..."
+          # 6. Création du fichier WAR
+          Write-Host "Création du WAR..."
           cd build
           jar -cvf ../dist/workflowmicropop.war .
 
       - name: Deploy to Local GlassFish
         shell: powershell
         run: |
+          # --- CONFIGURATION DE L'ENVIRONNEMENT ---
+          # On force GlassFish à utiliser ton JDK 1.8 pour éviter l'erreur "version 0"
+          $env:AS_JAVA = "C:\Program Files\Java\jdk-1.8"
+          
           $asadmin = "C:\Program Files\glassfish-4.1.1\bin\asadmin.bat"
           $warFile = "workflowprov1.0\dist\workflowmicropop.war"
           $port = "30442"
           
-          Write-Host "Déploiement sur le port $port..."
+          Write-Host "Déploiement sur GlassFish via Java 8 (Port $port)..."
+          # L'opérateur & est crucial pour exécuter le script avec des espaces dans le chemin
           & $asadmin deploy --force=true --port $port $warFile
