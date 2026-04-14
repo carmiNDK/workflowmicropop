@@ -3,7 +3,7 @@ name: Build and Deploy JavaEE WAR to EC2
 on:
   workflow_dispatch: {}  # Permet le lancement manuel
   schedule:
-    - cron: '40 5 * * 2'  # Chaque Mardi à 04h30 UTC
+    - cron: '30 15 * * 2'  # Chaque Mardi à 04h30 UTC
 
 jobs:
   build-and-deploy:
