@@ -61,7 +61,6 @@ public class Controleur extends HttpServlet {
 	WorkfloDAO WDao = new WorkfloDAO();
 
 	// hhhdhdhdhddeeeedddddddddddddd222nnnnn
-
 	public Controleur() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -85,7 +84,7 @@ public class Controleur extends HttpServlet {
 		request.setCharacterEncoding("UTF-8");
 		String PathServlet = request.getServletPath();
 		try {
-			if (PathServlet.equals("/login.php")) {
+			if (PathServlet.equals("/TestLogin")) {
 				request.getRequestDispatcher("Login.jsp").forward(request,
 						response);
 			}
@@ -9521,6 +9520,7 @@ public class Controleur extends HttpServlet {
 		String PathServlet = request.getServletPath();
 		try {
 			if (PathServlet.equals("/Authentification.php")) {
+				
 				List<WorkflowEntite> ListeIdentifiantsAccesUser = new ArrayList<>();
 				HttpSession sessionConnect = request.getSession();
 				HttpSession sessionConnectbus = request.getSession(false);

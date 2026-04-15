@@ -22,6 +22,7 @@ public class ConnexionBDLocal {
 		// String pwd = "Micropop@2024";
 		try {
 			// Class.forName("com.mysql.jdbc.Driver");
+			 System.out.println("Tentative connexion DB...");
 			Class.forName("com.mysql.cj.jdbc.Driver"); // pour version recente
 														// de mysql
 			cnx = DriverManager.getConnection(url, user, pwd);
@@ -33,6 +34,7 @@ public class ConnexionBDLocal {
 
 	public static Connection getConnexion() {
 		new ConnexionBDLocal();
+		 System.out.println(" Connexion réussie !");
 		return cnx;
 	}
 }

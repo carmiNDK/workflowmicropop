@@ -20,6 +20,7 @@ public class ConnexionBD {
 	// mcpop
 	static {
 		try {
+			System.out.println("Tentative connexion DB...");
 			// Class.forName("com.mysql.jdbc.Driver");
 			Class.forName("com.mysql.cj.jdbc.Driver"); // pour version recente
 			// de mysql
@@ -33,6 +34,7 @@ public class ConnexionBD {
 		Connection cnx = threadConnection.get();
 
 		try {
+
 			if (cnx == null || cnx.isClosed()) {
 				cnx = DriverManager.getConnection(URL, USER, PWD);
 				threadConnection.set(cnx);
@@ -40,7 +42,7 @@ public class ConnexionBD {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		System.out.println(" Connexion réussie !");
 		return cnx;
 	}
 
