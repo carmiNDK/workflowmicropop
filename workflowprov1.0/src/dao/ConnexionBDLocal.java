@@ -7,9 +7,9 @@ public class ConnexionBDLocal {
 	private static Connection cnx = null;
 
 	private ConnexionBDLocal() {
-		String url = "jdbc:mysql://localhost:3306/worflowcredit?useUnicode=true&characterEncoding=utf8&autoReconnect=true&connectTimeout=5000&socketTimeout=120000";
-		String user = "root";
-		String pwd = "Micropop@2025";
+		String url = "jdbc:mysql://instancebd-micropopsa.cxesweums8f0.eu-west-3.rds.amazonaws.com:3306/worflowcredit?useUnicode=true&characterEncoding=utf8&autoReconnect=true&connectTimeout=5000&socketTimeout=120000";
+		String user = "admin";
+		String pwd = "Micropop2026++";
 		// basetestworflowcredit
 		// worflowcredit
 		// String url =
