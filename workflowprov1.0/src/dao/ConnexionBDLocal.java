@@ -25,6 +25,7 @@ public class ConnexionBDLocal {
 			cnx = DriverManager.getConnection(url, user, pwd);
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
