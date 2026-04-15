@@ -19,7 +19,9 @@ public class ConnexionBDLocal {
 		// String user = "erp";
 		// String pwd = "Micropop@2024";
 		try {
-			Class.forName("com.mysql.jdbc.Driver");
+			// Class.forName("com.mysql.jdbc.Driver");
+			Class.forName("com.mysql.cj.jdbc.Driver"); // pour version recente
+														// de mysql
 			cnx = DriverManager.getConnection(url, user, pwd);
 		} catch (Exception e) {
 			e.printStackTrace();

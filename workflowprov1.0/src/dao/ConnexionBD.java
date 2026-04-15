@@ -18,7 +18,9 @@ public class ConnexionBD {
 	// mcpop
 	static {
 		try {
-			Class.forName("com.mysql.jdbc.Driver");
+			// Class.forName("com.mysql.jdbc.Driver");
+			Class.forName("com.mysql.cj.jdbc.Driver"); // pour version recente
+			// de mysql
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
