@@ -7,9 +7,11 @@ public class ConnexionBD {
 	private static final ThreadLocal<Connection> threadConnection = new ThreadLocal<>();
 
 	// worflowcredit,BaseTestworflowcredit,localhost;192.168.60.45
-	private static final String URL = "jdbc:mysql://instancebd-micropopsa.cxesweums8f0.eu-west-3.rds.amazonaws.com:3306/worflowcredit"
-			+ "?useUnicode=true&characterEncoding=utf8"
-			+ "&autoReconnect=true&connectTimeout=5000&socketTimeout=120000";
+	private static final String URL = "jdbc:mysql://instancebd-micropopsa.cxesweums8f0.eu-west-3.rds.amazonaws.com:3306/worflowcredit?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+	// private static final String URL =
+	// "jdbc:mysql://instancebd-micropopsa.cxesweums8f0.eu-west-3.rds.amazonaws.com:3306/worflowcredit"
+	// + "?useUnicode=true&characterEncoding=utf8"
+	// + "&autoReconnect=true&connectTimeout=5000&socketTimeout=120000";
 	private static final String USER = "admin";
 	private static final String PWD = "Micropop2026++";
 
