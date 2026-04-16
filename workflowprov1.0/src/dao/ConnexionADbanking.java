@@ -9,14 +9,14 @@ public class ConnexionADbanking {
 	// ozone :10.10.8.251
 	// Lushi : 10.10.9.252
 	// kabisa : 10.10.0.198
-	// private static final String URL =
-	// "jdbc:postgresql://10.10.9.252/adbanking";
-	// private static final String USER = "adbanking";
-	// private static final String PWD = "adbanking";
-
-	private static final String URL = "jdbc:postgresql://192.168.60.42/adbanking";
+	private static final String URL = "jdbc:postgresql://10.10.9.252/adbanking";
 	private static final String USER = "adbanking";
-	private static final String PWD = "ADBMi20CroPoP24";
+	private static final String PWD = "adbanking";
+
+	// private static final String URL =
+	// "jdbc:postgresql://192.168.60.42/adbanking";
+	// private static final String USER = "adbanking";
+	// private static final String PWD = "ADBMi20CroPoP24";
 
 	public static Connection getConnexion() throws SQLException {
 		try {

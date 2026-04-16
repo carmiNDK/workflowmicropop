@@ -20,7 +20,6 @@ public class ConnexionBD {
 	// mcpop
 	static {
 		try {
-			System.out.println("Tentative connexion DB...");
 			// Class.forName("com.mysql.jdbc.Driver");
 			Class.forName("com.mysql.cj.jdbc.Driver"); // pour version recente
 			// de mysql
