@@ -88,7 +88,6 @@ public class Controleur extends HttpServlet {
 				request.getRequestDispatcher("Login.jsp").forward(request,
 						response);
 			}
-
 			else if (PathServlet.equals("/getInfoGroupeRecapServlet.php")) {
 				getInfoGroupeRecapServlet(request, response);
 
